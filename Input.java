@@ -9,6 +9,7 @@ public class Input {
 	public static interface AnalogSupplier { double get(); }
     public static interface DigitalSupplier { boolean get(); }
 
+    /** Converts any pov's on a controller into button values past those that would normally be assigned */
 	public static class PovButton extends Button {
 		private final int 
 			port, button;
