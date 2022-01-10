@@ -48,11 +48,18 @@ public class Types {
         public String toString() { return "DriveMode@" + this.hashCode() + ": " + this.name(); }
     }
 	public static interface Drivable {
+
+        public DriveLayout getLayout();
+		public MotorController[] getMotors();
+
 		public void tankDrive(double l, double r);
 		public void arcadeDrive(double s, double rot);
 		public void raceDrive(double f, double b, double rot);
 		public void curvatureDrive(double s, double rot, boolean q);
-		public void topDownDrive(double x,  double y);
+		public void topDownDrive(double x,  double y, double rot);
+    
+		public void feed();
+    
 	}
     public static class DriveModes {    // handles incrementing/decrementing and custom drivemode arrays
 
@@ -135,7 +142,8 @@ public class Types {
 
     public static final class DB2<M extends MotorController> {     // a drivebase map containing two sides, each with one motor port
 
-		public static final DriveLayout layout = DriveLayout.DIFFERENTIAL;
+        //public static final DriveLayout[] supported = {DriveLayout.DIFFERENTIAL};
+		public final DriveLayout layout = DriveLayout.DIFFERENTIAL;
 		public final MotorSupplier<M> type;
 		public final int 
             left, 
@@ -161,25 +169,29 @@ public class Types {
         }
 		
     }
-    public static final class DB3 {
+    public static final class DB3<M extends MotorController> {
 
-		public static final DriveLayout layout = DriveLayout.KILLOUGH;
+        //public static final DriveLayout[] supported = {DriveLayout.KILLOUGH};
+		public final DriveLayout layout = DriveLayout.KILLOUGH;
+        public final MotorSupplier<M> type;
         public final int
 			left,
 			mid,
 			right;
 		
-		public DB3(int l, int m, int r) {
+		public DB3(int l, int m, int r, MotorSupplier<M> t) {
 			this.left = l;
 			this.mid = m;
 			this.right = r;
+            this.type = t;
 		}
 
     }
-    public static final class DB4 {     // a drivebase map containing two sides, each with two motor ports
+    public static final class DB4<M extends MotorController> {     // a drivebase map containing two sides, each with two motor ports
         
 		public static final DriveLayout[] supported = {DriveLayout.DIFFERENTIAL, DriveLayout.MECANUM};
 		public final DriveLayout layout;
+        public final MotorSupplier<M> type;
 		public final int 
             front_left,
             front_right,
@@ -188,27 +200,30 @@ public class Types {
         public final Inversions
             invert;
 
-        public DB4(int fl, int fr, int bl, int br) {
+        public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t) {
             this.front_left = fl;
             this.front_right = fr;
             this.back_left = bl;
             this.back_right = br;
+            this.type = t;
             this.invert = Inversions.NEITHER;
 			this.layout = DriveLayout.DIFFERENTIAL;
         }
-        public DB4(int fl, int fr, int bl, int br, Inversions i) {
+        public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i) {
             this.front_left = fl;
             this.front_right = fr;
             this.back_left = bl;
             this.back_right = br;
+            this.type = t;
             this.invert = i;
 			this.layout = DriveLayout.DIFFERENTIAL;
         }
-		public DB4(int fl, int fr, int bl, int br, DriveLayout l) {
+		public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, DriveLayout l) {
 			this.front_left = fl;
             this.front_right = fr;
             this.back_left = bl;
             this.back_right = br;
+            this.type = t;
             this.invert = Inversions.NEITHER;
 			for(DriveLayout lo : supported) {
 				if(l == lo) {
@@ -218,11 +233,12 @@ public class Types {
 			}
 			this.layout = supported[0];
 		}
-		public DB4(int fl, int fr, int bl, int br, Inversions i, DriveLayout l) {
+		public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i, DriveLayout l) {
 			this.front_left = fl;
             this.front_right = fr;
             this.back_left = bl;
             this.back_right = br;
+            this.type = t;
             this.invert = i;
 			for(DriveLayout lo : supported) {
 				if(l == lo) {

@@ -9,6 +9,36 @@ public class Input {
 	public static interface AnalogSupplier { double get(); }
     public static interface DigitalSupplier { boolean get(); }
 
+
+    public static class InputDevice extends GenericHID {
+
+        private final PovButton[] buttons;
+
+        public InputDevice(int p) { 
+            super(p); 
+            this.buttons = new PovButton[super.getButtonCount() + (super.getPOVCount() * 4)];
+        }
+
+        @Override
+        public boolean getRawButton(int button) {
+            int _bc = super.getButtonCount();
+            if((button > _bc) && (button <= _bc + (super.getPOVCount() * 4))) {
+                button = button - _bc;
+                return (super.getPOV((button-1) / 4) / 90.0 + 1) == button;
+            } else {
+                return super.getRawButton(button);
+            }
+        }
+
+        public PovButton getCallback(int button) {
+            if(this.buttons[button-1] == null) {
+                this.buttons[button-1] = new PovButton(this, button);
+            }
+            return this.buttons[button-1];
+        }
+
+    }
+
     /** Converts any pov's on a controller into button values past those that would normally be assigned */
 	public static class PovButton extends Button {
 		private final int 
@@ -29,10 +59,10 @@ public class Input {
 		}
 		@Override
         public boolean get() {
-            if (use_pov) {
-                return (DriverStation.getStickPOV(this.port, (button-1) / 4) / 90.0 + 1) == this.button;
+            if (this.use_pov) {
+                return (DriverStation.getStickPOV(this.port, (this.button-1) / 4) / 90.0 + 1) == this.button;
             } else {
-                return DriverStation.getStickButton(this.port, button);
+                return DriverStation.getStickButton(this.port, this.button);
             }
         }
 
@@ -103,4 +133,5 @@ public class Input {
             private Analog(int value) { this.value = value; }
         }
     }
+
 }
