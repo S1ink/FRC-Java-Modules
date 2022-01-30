@@ -1,6 +1,7 @@
-package frc.robot.modules;
+package frc.robot.modules.common;
 
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 
 public class Types {
 
@@ -140,27 +141,24 @@ public class Types {
 
 	public static interface MotorSupplier<M extends MotorController> { M create(int p); }
 
-    public static final class DB2<M extends MotorController> {     // a drivebase map containing two sides, each with one motor port
+    public static final class DB2 {     // a drivebase map containing two sides, each with one motor port
 
         //public static final DriveLayout[] supported = {DriveLayout.DIFFERENTIAL};
 		public final DriveLayout layout = DriveLayout.DIFFERENTIAL;
-		public final MotorSupplier<M> type;
-		public final int 
+		public final MotorController 
             left, 
             right;
         public final Inversions 
             invert;
         
-        public DB2(int l, int r, MotorSupplier<M> t) {
-            this.left = l;
-            this.right = r;
-			this.type = t;
+        public<M extends MotorController> DB2(int l, int r, MotorSupplier<M> t) {
+            this.left = t.create(l);
+            this.right = t.create(r);
             this.invert = Inversions.NEITHER;
         }
-        public DB2(int l, int r, MotorSupplier<M> t, Inversions i) {
-            this.left = l;
-            this.right = r;
-			this.type = t;
+        public<M extends MotorController> DB2(int l, int r, MotorSupplier<M> t, Inversions i) {
+            this.left = DriveBase.inlineInverter(t.create(l), i.left);
+            this.right = DriveBase.inlineInverter(t.create(r), i.right);
             this.invert = i;
         }
 
@@ -169,30 +167,27 @@ public class Types {
         }
 		
     }
-    public static final class DB3<M extends MotorController> {
+    public static final class DB3 {
 
         //public static final DriveLayout[] supported = {DriveLayout.KILLOUGH};
 		public final DriveLayout layout = DriveLayout.KILLOUGH;
-        public final MotorSupplier<M> type;
-        public final int
+        public final MotorController
 			left,
 			mid,
 			right;
 		
-		public DB3(int l, int m, int r, MotorSupplier<M> t) {
-			this.left = l;
-			this.mid = m;
-			this.right = r;
-            this.type = t;
+		public<M extends MotorController> DB3(int l, int m, int r, MotorSupplier<M> t) {
+			this.left = t.create(l);
+			this.mid = t.create(m);
+			this.right = t.create(r);
 		}
 
     }
-    public static final class DB4<M extends MotorController> {     // a drivebase map containing two sides, each with two motor ports
+    public static final class DB4 {     // a drivebase map containing two sides, each with two motor ports
         
 		public static final DriveLayout[] supported = {DriveLayout.DIFFERENTIAL, DriveLayout.MECANUM};
 		public final DriveLayout layout;
-        public final MotorSupplier<M> type;
-		public final int 
+		public final MotorController 
             front_left,
             front_right,
             back_left,
@@ -200,30 +195,27 @@ public class Types {
         public final Inversions
             invert;
 
-        public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t) {
-            this.front_left = fl;
-            this.front_right = fr;
-            this.back_left = bl;
-            this.back_right = br;
-            this.type = t;
+        public<M extends MotorController> DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t) {
+            this.front_left = t.create(fl);
+            this.front_right = t.create(fr);
+            this.back_left = t.create(bl);
+            this.back_right = t.create(br);
             this.invert = Inversions.NEITHER;
 			this.layout = DriveLayout.DIFFERENTIAL;
         }
-        public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i) {
-            this.front_left = fl;
-            this.front_right = fr;
-            this.back_left = bl;
-            this.back_right = br;
-            this.type = t;
+        public<M extends MotorController> DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i) {
+            this.front_left = DriveBase.inlineInverter(t.create(fl), i.left);
+            this.front_right = DriveBase.inlineInverter(t.create(fr), i.right);
+            this.back_left = DriveBase.inlineInverter(t.create(bl), i.left);
+            this.back_right = DriveBase.inlineInverter(t.create(br), i.right);
             this.invert = i;
 			this.layout = DriveLayout.DIFFERENTIAL;
         }
-		public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, DriveLayout l) {
-			this.front_left = fl;
-            this.front_right = fr;
-            this.back_left = bl;
-            this.back_right = br;
-            this.type = t;
+		public<M extends MotorController> DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, DriveLayout l) {
+			this.front_left = t.create(fl);
+            this.front_right = t.create(fr);
+            this.back_left = t.create(bl);
+            this.back_right = t.create(br);
             this.invert = Inversions.NEITHER;
 			for(DriveLayout lo : supported) {
 				if(l == lo) {
@@ -233,12 +225,11 @@ public class Types {
 			}
 			this.layout = supported[0];
 		}
-		public DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i, DriveLayout l) {
-			this.front_left = fl;
-            this.front_right = fr;
-            this.back_left = bl;
-            this.back_right = br;
-            this.type = t;
+		public<M extends MotorController> DB4(int fl, int fr, int bl, int br, MotorSupplier<M> t, Inversions i, DriveLayout l) {
+			this.front_left = DriveBase.inlineInverter(t.create(fl), i.left);
+            this.front_right = DriveBase.inlineInverter(t.create(fr), i.right);
+            this.back_left = DriveBase.inlineInverter(t.create(bl), i.left);
+            this.back_right = DriveBase.inlineInverter(t.create(br), i.right);
             this.invert = i;
 			for(DriveLayout lo : supported) {
 				if(l == lo) {
@@ -248,6 +239,17 @@ public class Types {
 			}
 			this.layout = supported[0];
 		}
+
+        public MotorController getLeftGroup() {
+            this.front_left.setInverted(!this.invert.left);	// revert inversion in constructor
+            this.back_left.setInverted(!this.invert.left);
+            return DriveBase.inlineInverter(new MotorControllerGroup(this.front_left, this.back_left), this.invert.left);
+        }
+        public MotorController getRightGroup() {
+            this.front_right.setInverted(!this.invert.right);	// revert inversion in constructor
+            this.back_right.setInverted(!this.invert.right);
+            return DriveBase.inlineInverter(new MotorControllerGroup(this.front_right, this.back_right), this.invert.right);
+        }
 
         public String toString() {
             return "DB4@" + this.hashCode() + ": {FL:" + this.front_left + " FR:" + this.front_right + 
