@@ -145,27 +145,118 @@ public class Input {
 	}
 
     public static interface AnalogMap {
-        boolean compatible(GenericHID i);
-        boolean compatible(int p);
-        double getValue(GenericHID i);
-        double getValue(int p);
-        AnalogSupplier getCallback(InputDevice i);
-        AnalogSupplier getCallback(int p);
+        int getValue();
+        int getTotal();
+        default boolean compatible(GenericHID i) { return i.getAxisCount() == this.getTotal(); }
+        default boolean compatible(int p) { return DriverStation.getStickAxisCount(p) == this.getTotal(); }
+        default double getValueOf(GenericHID i) {
+            if(this.compatible(i)) {
+                return i.getRawAxis(this.getValue());
+            }
+            return 0.0;
+        }
+        default double getValueOf(int p) {
+            if(this.compatible(p)) {
+                return DriverStation.getStickAxis(p, this.getValue());
+            }
+            return 0.0;
+        }
+        default AnalogSupplier getSupplier(InputDevice i) {
+            if(this.compatible(i)) {
+                return ()->i.getRawAxis(this.getValue());
+            }
+            return ()->0.0;
+        }
+        default AnalogSupplier getSupplier(int p) {
+            if(this.compatible(p)) {
+                return ()->DriverStation.getStickAxis(p, this.getValue());
+            }
+            return ()->0.0;
+        }
     }
     public static interface DigitalMap {
-        boolean compatible(GenericHID i);
-        boolean compatible(int p);
-        boolean isPovBind(GenericHID i);
-        boolean isPovBind(int p);
-        int getPovBind(GenericHID i);
-        int getPovBind(int p);
-        PovButton getButton(InputDevice i);
-        PovButton getButton(GenericHID i);
-        PovButton getButton(int p);
-        boolean getValue(GenericHID i);
-        boolean getValue(int p);
-        DigitalSupplier getCallback(GenericHID i);
-        DigitalSupplier getCallback(int p);
+        int getValue();
+        int getTotal();
+        default boolean compatible(GenericHID i) {
+            return i.getButtonCount() + (i.getPOVCount()*4) == this.getTotal();
+        }
+        default boolean compatible(int p) {
+            return DriverStation.getStickButtonCount(p) + (DriverStation.getStickPOVCount(p)*4) == this.getTotal();
+        }
+        default boolean isPovBindOf(GenericHID i) {
+            if(this.compatible(i)) {
+                return this.getValue() > i.getButtonCount();
+            }
+            return false;
+        }
+        default boolean isPovBindOf(int p) {
+            if(this.compatible(p)) {
+                return this.getValue() > DriverStation.getStickPOVCount(p);
+            }
+            return false;
+        }
+        default int getPovBindOf(GenericHID i) {
+            if(this.compatible(i) && this.isPovBindOf(i)) {
+                return (this.getValue() - i.getButtonCount())/4;
+            }
+            return -1;
+        }
+        default int getPovBindOf(int p) {
+            if(this.compatible(p) && this.isPovBindOf(p)) {
+                return (this.getValue() - DriverStation.getStickButtonCount(p))/4;
+            }
+            return -1;
+        }
+        default PovButton getCallbackFrom(InputDevice i) {
+            if(this.compatible(i)) {
+                return i.getCallback(this.getValue());
+            }
+            return PovButton.dummy;
+        }
+        default PovButton getCallbackFrom(GenericHID i) {
+            if(this.compatible(i)) {
+                return new PovButton(i, this.getValue());
+            }
+            return PovButton.dummy;
+        }
+        default PovButton getCallbackFrom(int p) {
+            if(this.compatible(p)) {
+                return new PovButton(p, this.getValue());
+            }
+            return PovButton.dummy;
+        }
+        default boolean getValueOf(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return (i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return i.getRawButton(this.getValue());
+            }
+            return false;
+        }
+        default boolean getValueOf(int p) {
+            if(this.isPovBindOf(p)) {
+                return (DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return DriverStation.getStickButton(p, this.getValue());
+            }
+            return false;
+        }
+        default DigitalSupplier getSupplier(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return ()->i.getRawButton(this.getValue());
+            }
+            return ()->false;
+        }
+        default DigitalSupplier getSupplier(int p) {
+            if(this.isPovBindOf(p)) {
+                return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return ()->DriverStation.getStickButton(p, this.getValue());
+            }
+            return ()->false;
+        }
     }
 
 
@@ -177,125 +268,21 @@ public class Input {
             public final int value;
             private Analog(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) { return i.getAxisCount() == TOTAL.value; }
-            public boolean compatible(int p) { return DriverStation.getStickAxisCount(p) == TOTAL.value; }
-            public double getValue(GenericHID i) {
-                if(this.compatible(i)) {
-                    return i.getRawAxis(this.value);
-                }
-                return 0.0;
-            }
-            public double getValue(int p) {
-                if(this.compatible(p)) {
-                    return DriverStation.getStickAxis(p, this.value);
-                }
-                return 0.0;
-            }
-            public AnalogSupplier getCallback(InputDevice i) {
-                if(this.compatible(i)) {
-                    return ()->i.getRawAxis(this.value);
-                }
-                return ()->0.0;
-            }
-            public AnalogSupplier getCallback(int p) {
-                if(this.compatible(p)) {
-                    return ()->DriverStation.getStickAxis(p, this.value);
-                }
-                return ()->0.0;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
         public static enum Digital implements DigitalMap {
             LB(5), RB(6), LS(9), RS(10),
             A(1), B(2), X(3), Y(4),
             BACK(7), START(8),
-            BUTTONS(10),
             DT(11), DR(12), DB(13), DL(14),  // Dpad buttons (only valid with PovButton objects)
-            POVS(1),
             TOTAL(14);
         
             public final int value;
             private Digital(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) {
-                return i.getButtonCount() + (i.getPOVCount()*4) == TOTAL.value;
-            }
-            public boolean compatible(int p) {
-                return DriverStation.getStickButtonCount(p) + (DriverStation.getStickPOVCount(p)*4) == TOTAL.value;
-            }
-            public boolean isPovBind(GenericHID i) {
-                if(this.compatible(i)) {
-                    return this.value > i.getButtonCount();
-                }
-                return false;
-            }
-            public boolean isPovBind(int p) {
-                if(this.compatible(p)) {
-                    return this.value > DriverStation.getStickPOVCount(p);
-                }
-                return false;
-            }
-            public int getPovBind(GenericHID i) {
-                if(this.compatible(i) && this.isPovBind(i)) {
-                    return (this.value - i.getButtonCount())/4;
-                }
-                return -1;
-            }
-            public int getPovBind(int p) {
-                if(this.compatible(p) && this.isPovBind(p)) {
-                    return (this.value - DriverStation.getStickButtonCount(p))/4;
-                }
-                return -1;
-            }
-            public PovButton getButton(InputDevice i) {
-                if(this.compatible(i)) {
-                    return i.getCallback(this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(GenericHID i) {
-                if(this.compatible(i)) {
-                    return new PovButton(i, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(int p) {
-                if(this.compatible(p)) {
-                    return new PovButton(p, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public boolean getValue(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return (i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return i.getRawButton(this.value);
-                }
-                return false;
-            }
-            public boolean getValue(int p) {
-                if(this.isPovBind(p)) {
-                    return (DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return DriverStation.getStickButton(p, this.value);
-                }
-                return false;
-            }
-            public DigitalSupplier getCallback(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return ()->(i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return ()->i.getRawButton(this.value);
-                }
-                return ()->false;
-            }
-            public DigitalSupplier getCallback(int p) {
-                if(this.isPovBind(p)) {
-                    return ()->(DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return ()->DriverStation.getStickButton(p, this.value);
-                }
-                return ()->false;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
     }
     public static class PlayStation {
@@ -306,123 +293,21 @@ public class Input {
             public final int value;
             private Analog(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) { return i.getAxisCount() == TOTAL.value; }
-            public boolean compatible(int p) { return DriverStation.getStickAxisCount(p) == TOTAL.value; }
-            public double getValue(GenericHID i) {
-                if(this.compatible(i)) {
-                    return i.getRawAxis(this.value);
-                }
-                return 0.0;
-            }
-            public double getValue(int p) {
-                if(this.compatible(p)) {
-                    return DriverStation.getStickAxis(p, this.value);
-                }
-                return 0.0;
-            }
-            public AnalogSupplier getCallback(InputDevice i) {
-                if(this.compatible(i)) {
-                    return ()->i.getRawAxis(this.value);
-                }
-                return ()->0.0;
-            }
-            public AnalogSupplier getCallback(int p) {
-                if(this.compatible(p)) {
-                    return ()->DriverStation.getStickAxis(p, this.value);
-                }
-                return ()->0.0;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
-        public static enum Digital {
+        public static enum Digital implements DigitalMap {
             SQR(1), X(2), O(3), TRI(4),     // square, cross, circle, triangle
             LB(5), RB(6), L2(7), R2(8),     // right-bumper, left-bumper,   left-trigger, right-trigger (button mode)
             SHARE(9), OPT(10), PS(13),      // share, options, ps button
             TOUCH(14), LS(11), RS(12),      // touchpad, left-stick, right-stick
-            BUTTONS(14), POVS(0), TOTAL(14);
+            TOTAL(14);
 
             public final int value;
             private Digital(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) {
-                return i.getButtonCount() + (i.getPOVCount()*4) == TOTAL.value;
-            }
-            public boolean compatible(int p) {
-                return DriverStation.getStickButtonCount(p) + (DriverStation.getStickPOVCount(p)*4) == TOTAL.value;
-            }
-            public boolean isPovBind(GenericHID i) {
-                if(this.compatible(i)) {
-                    return this.value > i.getButtonCount();
-                }
-                return false;
-            }
-            public boolean isPovBind(int p) {
-                if(this.compatible(p)) {
-                    return this.value > DriverStation.getStickPOVCount(p);
-                }
-                return false;
-            }
-            public int getPovBind(GenericHID i) {
-                if(this.compatible(i) && this.isPovBind(i)) {
-                    return (this.value - i.getButtonCount())/4;
-                }
-                return -1;
-            }
-            public int getPovBind(int p) {
-                if(this.compatible(p) && this.isPovBind(p)) {
-                    return (this.value - DriverStation.getStickButtonCount(p))/4;
-                }
-                return -1;
-            }
-            public PovButton getButton(InputDevice i) {
-                if(this.compatible(i)) {
-                    return i.getCallback(this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(GenericHID i) {
-                if(this.compatible(i)) {
-                    return new PovButton(i, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(int p) {
-                if(this.compatible(p)) {
-                    return new PovButton(p, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public boolean getValue(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return (i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return i.getRawButton(this.value);
-                }
-                return false;
-            }
-            public boolean getValue(int p) {
-                if(this.isPovBind(p)) {
-                    return (DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return DriverStation.getStickButton(p, this.value);
-                }
-                return false;
-            }
-            public DigitalSupplier getCallback(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return ()->(i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return ()->i.getRawButton(this.value);
-                }
-                return ()->false;
-            }
-            public DigitalSupplier getCallback(int p) {
-                if(this.isPovBind(p)) {
-                    return ()->(DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return ()->DriverStation.getStickButton(p, this.value);
-                }
-                return ()->false;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
     }
     public static class Attack3 {
@@ -433,121 +318,19 @@ public class Input {
             public final int value;
             private Analog(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) { return i.getAxisCount() == TOTAL.value; }
-            public boolean compatible(int p) { return DriverStation.getStickAxisCount(p) == TOTAL.value; }
-            public double getValue(GenericHID i) {
-                if(this.compatible(i)) {
-                    return i.getRawAxis(this.value);
-                }
-                return 0.0;
-            }
-            public double getValue(int p) {
-                if(this.compatible(p)) {
-                    return DriverStation.getStickAxis(p, this.value);
-                }
-                return 0.0;
-            }
-            public AnalogSupplier getCallback(InputDevice i) {
-                if(this.compatible(i)) {
-                    return ()->i.getRawAxis(this.value);
-                }
-                return ()->0.0;
-            }
-            public AnalogSupplier getCallback(int p) {
-                if(this.compatible(p)) {
-                    return ()->DriverStation.getStickAxis(p, this.value);
-                }
-                return ()->0.0;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
-        public static enum Digital {
+        public static enum Digital implements DigitalMap {
             TRI(1), TB(2), TT(3), TL(4), TR(5),             // ~ trigger, top-bottom, top-top, top-left, top-right
             B1(6), B2(7), B3(8), B4(9), B5(10), B6(11),     // ~ buttons on the base of the joystick (labeled)
-            BUTTONS(11), POVS(0), TOTAL(11);
+            TOTAL(11);
 
             public final int value;
             private Digital(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) {
-                return i.getButtonCount() + (i.getPOVCount()*4) == TOTAL.value;
-            }
-            public boolean compatible(int p) {
-                return DriverStation.getStickButtonCount(p) + (DriverStation.getStickPOVCount(p)*4) == TOTAL.value;
-            }
-            public boolean isPovBind(GenericHID i) {
-                if(this.compatible(i)) {
-                    return this.value > i.getButtonCount();
-                }
-                return false;
-            }
-            public boolean isPovBind(int p) {
-                if(this.compatible(p)) {
-                    return this.value > DriverStation.getStickPOVCount(p);
-                }
-                return false;
-            }
-            public int getPovBind(GenericHID i) {
-                if(this.compatible(i) && this.isPovBind(i)) {
-                    return (this.value - i.getButtonCount())/4;
-                }
-                return -1;
-            }
-            public int getPovBind(int p) {
-                if(this.compatible(p) && this.isPovBind(p)) {
-                    return (this.value - DriverStation.getStickButtonCount(p))/4;
-                }
-                return -1;
-            }
-            public PovButton getButton(InputDevice i) {
-                if(this.compatible(i)) {
-                    return i.getCallback(this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(GenericHID i) {
-                if(this.compatible(i)) {
-                    return new PovButton(i, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(int p) {
-                if(this.compatible(p)) {
-                    return new PovButton(p, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public boolean getValue(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return (i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return i.getRawButton(this.value);
-                }
-                return false;
-            }
-            public boolean getValue(int p) {
-                if(this.isPovBind(p)) {
-                    return (DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return DriverStation.getStickButton(p, this.value);
-                }
-                return false;
-            }
-            public DigitalSupplier getCallback(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return ()->(i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return ()->i.getRawButton(this.value);
-                }
-                return ()->false;
-            }
-            public DigitalSupplier getCallback(int p) {
-                if(this.isPovBind(p)) {
-                    return ()->(DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return ()->DriverStation.getStickButton(p, this.value);
-                }
-                return ()->false;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
     }
     public static class Extreme3d {
@@ -558,121 +341,19 @@ public class Input {
             public final int value;
             private Analog(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) { return i.getAxisCount() == TOTAL.value; }
-            public boolean compatible(int p) { return DriverStation.getStickAxisCount(p) == TOTAL.value; }
-            public double getValue(GenericHID i) {
-                if(this.compatible(i)) {
-                    return i.getRawAxis(this.value);
-                }
-                return 0.0;
-            }
-            public double getValue(int p) {
-                if(this.compatible(p)) {
-                    return DriverStation.getStickAxis(p, this.value);
-                }
-                return 0.0;
-            }
-            public AnalogSupplier getCallback(InputDevice i) {
-                if(this.compatible(i)) {
-                    return ()->i.getRawAxis(this.value);
-                }
-                return ()->0.0;
-            }
-            public AnalogSupplier getCallback(int p) {
-                if(this.compatible(p)) {
-                    return ()->DriverStation.getStickAxis(p, this.value);
-                }
-                return ()->0.0;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
-        public static enum Digital {
+        public static enum Digital implements DigitalMap {
             TRI(1), SIDE(2), TLB(3), TRB(4), TLT(5), TRT(6),    // trigger, side, top-left-bottom, top-right-bottom, top-left-top, top-right-top
             B7(7), B8(8), B9(9), B10(10), B11(11), B12(12),     // as printed on the actual joystick
-            BUTTONS(12), POVS(0), TOTAL(12);
+            TOTAL(12);
 
             public final int value;
             private Digital(int value) { this.value = value; }
 
-            public boolean compatible(GenericHID i) {
-                return i.getButtonCount() + (i.getPOVCount()*4) == TOTAL.value;
-            }
-            public boolean compatible(int p) {
-                return DriverStation.getStickButtonCount(p) + (DriverStation.getStickPOVCount(p)*4) == TOTAL.value;
-            }
-            public boolean isPovBind(GenericHID i) {
-                if(this.compatible(i)) {
-                    return this.value > i.getButtonCount();
-                }
-                return false;
-            }
-            public boolean isPovBind(int p) {
-                if(this.compatible(p)) {
-                    return this.value > DriverStation.getStickPOVCount(p);
-                }
-                return false;
-            }
-            public int getPovBind(GenericHID i) {
-                if(this.compatible(i) && this.isPovBind(i)) {
-                    return (this.value - i.getButtonCount())/4;
-                }
-                return -1;
-            }
-            public int getPovBind(int p) {
-                if(this.compatible(p) && this.isPovBind(p)) {
-                    return (this.value - DriverStation.getStickButtonCount(p))/4;
-                }
-                return -1;
-            }
-            public PovButton getButton(InputDevice i) {
-                if(this.compatible(i)) {
-                    return i.getCallback(this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(GenericHID i) {
-                if(this.compatible(i)) {
-                    return new PovButton(i, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public PovButton getButton(int p) {
-                if(this.compatible(p)) {
-                    return new PovButton(p, this.value);
-                }
-                return PovButton.dummy;
-            }
-            public boolean getValue(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return (i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return i.getRawButton(this.value);
-                }
-                return false;
-            }
-            public boolean getValue(int p) {
-                if(this.isPovBind(p)) {
-                    return (DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return DriverStation.getStickButton(p, this.value);
-                }
-                return false;
-            }
-            public DigitalSupplier getCallback(GenericHID i) {
-                if(this.isPovBind(i)) {
-                    return ()->(i.getPOV((this.value-i.getButtonCount()-1) / 4) / 90.0 + 1) == this.value-i.getButtonCount();
-                } else if(this.compatible(i)) {
-                    return ()->i.getRawButton(this.value);
-                }
-                return ()->false;
-            }
-            public DigitalSupplier getCallback(int p) {
-                if(this.isPovBind(p)) {
-                    return ()->(DriverStation.getStickPOV(p, (this.value-DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.value-DriverStation.getStickButtonCount(p);
-                } else if(this.compatible(p)) {
-                    return ()->DriverStation.getStickButton(p, this.value);
-                }
-                return ()->false;
-            }
+            public int getValue() { return this.value; }
+            public int getTotal() { return TOTAL.value; }
         }
     }
 

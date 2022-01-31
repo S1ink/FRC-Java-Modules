@@ -326,7 +326,7 @@ public class DriveBase extends SubsystemBase {
 		}
 	}
 
-	private static class Decelerate extends CommandBase {
+	public static class Decelerate extends CommandBase {
 		private final DriveBase drivebase;
 		private final Types.Deceleration constant;
 		public Decelerate(DriveBase db, Types.Deceleration c) {
@@ -334,6 +334,7 @@ public class DriveBase extends SubsystemBase {
 			this.constant = c;
 			super.addRequirements(db);
 		}
+		@Override public void initialize() { System.out.println("Decelerating..."); }
 		@Override public void execute() { 
 			DriveBase.applyDeceleration(this.constant, this.drivebase.drive.getMotors());
 			this.drivebase.drive.feed();
