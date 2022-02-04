@@ -55,8 +55,8 @@ public class MotionTracking {
 				acc = 0;
 			}
 			//position += new distance->{average velocity->{old velocity + delta velocity->{average acceleration * delta time} / 2} * delta_t}
-			this.vect.position += (this.vect.velocity + ((this.vect.acceleration + acc)/2.0*delta_t))*delta_t;
-			this.vect.velocity += (this.vect.acceleration + acc)/2.0*delta_t;
+			this.vect.position += (this.vect.velocity * 2.0 + (this.vect.acceleration + acc) / 2.0 * delta_t) / 2.0 * delta_t;
+			this.vect.velocity += (this.vect.acceleration + acc) / 2.0 * delta_t;
 			this.vect.acceleration = acc;
 
 			if(Math.abs(this.vect.velocity) <= this.vel_threshold) {

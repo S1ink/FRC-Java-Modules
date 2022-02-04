@@ -24,8 +24,8 @@ public class Types {
     public static enum Inversions {
         NEITHER (false, false),
         LEFT    (true, false),
-        BOTH    (true, true),
-        RIGHT   (false, true);
+        RIGHT   (false, true),
+        BOTH    (true, true);
 
         public final boolean left, right;
         Inversions(boolean l, boolean r) {
@@ -58,7 +58,10 @@ public class Types {
 		public void raceDrive(double f, double b, double rot);
 		public void curvatureDrive(double s, double rot, boolean q);
 		public void topDownDrive(double x,  double y, double rot);
-    
+
+        public void autoTurn(double v); // turn by supplying "speed" -> positive for one direction, negative for the other
+        public void autoDrive(double l, double r);
+
 		public void feed();
     
 	}
@@ -241,13 +244,13 @@ public class Types {
 		}
 
         public MotorController getLeftGroup() {
-            this.front_left.setInverted(!this.invert.left);	// revert inversion in constructor
-            this.back_left.setInverted(!this.invert.left);
+            this.front_left.setInverted(false);	// revert inversion in constructor
+            this.back_left.setInverted(false);
             return DriveBase.inlineInverter(new MotorControllerGroup(this.front_left, this.back_left), this.invert.left);
         }
         public MotorController getRightGroup() {
-            this.front_right.setInverted(!this.invert.right);	// revert inversion in constructor
-            this.back_right.setInverted(!this.invert.right);
+            this.front_right.setInverted(false);	// revert inversion in constructor
+            this.back_right.setInverted(false);
             return DriveBase.inlineInverter(new MotorControllerGroup(this.front_right, this.back_right), this.invert.right);
         }
 

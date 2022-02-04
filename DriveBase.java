@@ -20,14 +20,24 @@ public class DriveBase extends SubsystemBase {
 		return m;
 	}
 	public static void applyDeceleration(Types.Deceleration constant, MotorController m, MotorController... ms) {
-		m.set(m.get()*constant.value);
+		m.set(m.get() * constant.value);
 		for(int i = 0; i < ms.length; i++) {
-			ms[i].set(ms[i].get()*constant.value);
+			ms[i].set(ms[i].get() * constant.value);
 		}
 	}
 	public static void applyDeceleration(Types.Deceleration constant, MotorController[] motors) {
 		for(int i = 0; i < motors.length; i++) {
-			motors[i].set(motors[i].get()*constant.value);
+			motors[i].set(motors[i].get() * constant.value);
+		}
+	}
+	public static void applyPercentage(MotorController[] motors, double p) {
+		for(int i = 0; i < motors.length; i++) {
+			motors[i].set(motors[i].get() * p);
+		}
+	}
+	public static void applyAll(MotorController[] motors, double s) {
+		for(int i = 0; i < motors.length; i++) {
+			motors[i].set(s);
 		}
 	}
 	public static void applyStop(MotorController m, MotorController... ms) {
@@ -70,6 +80,17 @@ public class DriveBase extends SubsystemBase {
 		@Override public void curvatureDrive(double s, double rot, boolean q) { drive.curvatureDrive(s, rot, q); }
 		@Override public void topDownDrive(double x,  double y, double rot) { System.out.println("DifferentialBase: topDownDrive() is not supported"); }
 
+		@Override public void autoTurn(double v) {
+			this.motors[0].set(v);
+			this.motors[1].set(-v);
+			this.drive.feed();
+		}
+		@Override public void autoDrive(double l, double r) {
+			this.motors[0].set(l);
+			this.motors[1].set(r);
+			this.drive.feed();
+		}
+
 		@Override public void feed() { this.drive.feed(); }
 
 
@@ -98,6 +119,21 @@ public class DriveBase extends SubsystemBase {
 		@Override public void curvatureDrive(double s, double rot, boolean q) { System.out.println("MecanumBase: curvatureDrive() is not implemented yet"); }
 		@Override public void topDownDrive(double x,  double y, double rot) { this.drive.driveCartesian(y, x, rot); }
 
+		@Override public void autoTurn(double v) {
+			this.motors[0].set(v);
+			this.motors[1].set(v);
+			this.motors[2].set(-v);
+			this.motors[3].set(-v);
+			this.drive.feed();
+		}
+		@Override public void autoDrive(double l, double r) {
+			this.motors[0].set(l);
+			this.motors[1].set(l);
+			this.motors[2].set(r);
+			this.motors[3].set(r);
+			this.drive.feed();
+		}
+
 		@Override public void feed() { this.drive.feed(); }
 
 
@@ -124,6 +160,15 @@ public class DriveBase extends SubsystemBase {
 		@Override public void raceDrive(double f, double b, double rot) { this.drive.driveCartesian(f-b, 0, rot); }
 		@Override public void curvatureDrive(double s, double rot, boolean q) { System.out.println("KilloughBase: curvatureDrive() is not implemented yet"); }
 		@Override public void topDownDrive(double x,  double y, double rot) { this.drive.driveCartesian(y, x, rot); }
+
+		@Override public void autoTurn(double v) {
+			applyAll(this.motors, v);
+			this.drive.feed();
+		}
+		@Override public void autoDrive(double l, double r) {
+
+			this.drive.feed();
+		}
 
 		@Override public void feed() { this.drive.feed(); }
 
@@ -179,6 +224,11 @@ public class DriveBase extends SubsystemBase {
 		protected void raceDrive(double f, double b, double rot) { this.drivebase.drive.raceDrive(f, b, rot); }
 		protected void curvatureDrive(double s, double rot, boolean q) { this.drivebase.drive.curvatureDrive(s, rot, q); }
 		protected void topDownDrive(double x,  double y, double rot) { this.drivebase.drive.topDownDrive(x, y, rot); }
+
+		protected void autoTurn(double v) { this.drivebase.drive.autoTurn(v); }
+		protected void autoDrive(double l, double r) { this.drivebase.drive.autoDrive(l, r); }
+
+		protected void fromLast(double p) { applyPercentage(this.drivebase.drive.getMotors(), p); }
 
 	}
 
@@ -360,7 +410,9 @@ public class DriveBase extends SubsystemBase {
 		//@Override public void initialize() { applyStop(this.drivebase.drive.getMotors()); }
 		@Override public void execute() { 
 			applyStop(this.drivebase.drive.getMotors());
-			this.drivebase.drive.feed(); }
+			this.drivebase.drive.feed(); 
+			System.out.println("DriveBase Idling...");
+		}
 		@Override public boolean isFinished() { return false; }
 
 	}
