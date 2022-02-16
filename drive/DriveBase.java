@@ -1,7 +1,6 @@
-package frc.robot.modules.common;
+package frc.robot.modules.common.drive;
 
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-
 //import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
@@ -12,77 +11,34 @@ import edu.wpi.first.wpilibj.drive.KilloughDrive;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import frc.robot.modules.common.Input;
+import frc.robot.modules.common.drive.Types.*;
 
-// REORGANIZE TOP METHODS PLZ
 
 public class DriveBase extends SubsystemBase {
-	
-	// public static MotorController inlineInverter(MotorController m, boolean invert) {
-	// 	m.setInverted(invert);
-	// 	return m;
-	// }
-	public static<M extends MotorController> M inlineInverter(M m, boolean invert) {
-		m.setInverted(invert);
-		return m;
-	}
-	public static void applyDeceleration(Types.Deceleration constant, MotorController m, MotorController... ms) {
-		m.set(m.get() * constant.value);
-		for(int i = 0; i < ms.length; i++) {
-			ms[i].set(ms[i].get() * constant.value);
-		}
-	}
-	public static void applyDeceleration(Types.Deceleration constant, MotorController[] motors) {
-		for(int i = 0; i < motors.length; i++) {
-			motors[i].set(motors[i].get() * constant.value);
-		}
-	}
-	public static void applyPercentage(MotorController[] motors, double p) {
-		for(int i = 0; i < motors.length; i++) {
-			motors[i].set(motors[i].get() * p);
-		}
-	}
-	public static void applyAll(MotorController[] motors, double s) {
-		for(int i = 0; i < motors.length; i++) {
-			motors[i].set(s);
-		}
-	}
-	public static void applyStop(MotorController m, MotorController... ms) {
-		m.set(0);
-		for(int i = 0; i < ms.length; i++) {
-			ms[i].set(0);
-		}
-	}
-	public static void applyStop(MotorController[] motors) {
-		for(int i = 0; i < motors.length; i++) {
-			motors[i].set(0);
-		}
-	}
 
-	private static class DifferentialBase implements Types.Drivable {
+	private static class DifferentialBase implements Drivable {
 
 		private final MotorController[] motors = new MotorController[2];
 		private final DifferentialDrive drive;
-		private final Types.DBS settings;
 
-		public<M extends MotorController> DifferentialBase(Types.DB2<M> map, Types.DBS s) {
+		public<M extends MotorController> DifferentialBase(DriveMap_2<M> map) {
 			this.motors[0] = map.left;
 			this.motors[1] = map.right;
 			this.drive = new DifferentialDrive(this.motors[0], this.motors[1]);
-			this.settings = s;
 		}
-		public <M extends MotorController>DifferentialBase(Types.DB4<M> map, Types.DBS s) {
+		public <M extends MotorController>DifferentialBase(DriveMap_4<M> map) {
 			this.motors[0] = map.getLeftGroup();
 			this.motors[1] = map.getRightGroup();
 			this.drive = new DifferentialDrive(this.motors[0], this.motors[1]);
-			this.settings = s;
 		}
 
-		@Override public Types.DriveLayout getLayout() { return Types.DriveLayout.DIFFERENTIAL; }
+		@Override public DriveLayout getLayout() { return DriveLayout.DIFFERENTIAL; }
 		@Override public MotorController[] getMotors() { return this.motors; }
 
-		@Override public void tankDrive(double l, double r) { drive.tankDrive(l, r, this.settings.default_squaring); }
-		@Override public void arcadeDrive(double s, double rot) { drive.arcadeDrive(s, rot, this.settings.default_squaring); }
-		@Override public void raceDrive(double f, double b, double rot) { drive.arcadeDrive(f-b, rot, this.settings.default_squaring); }
+		@Override public void tankDrive(double l, double r) { drive.tankDrive(l, r, false); }
+		@Override public void arcadeDrive(double s, double rot) { drive.arcadeDrive(s, rot, false); }
+		@Override public void raceDrive(double f, double b, double rot) { drive.arcadeDrive(f-b, rot, false); }
 		@Override public void curvatureDrive(double s, double rot, boolean q) { drive.curvatureDrive(s, rot, q); }
 		@Override public void topDownDrive(double x,  double y, double rot) { System.out.println("DifferentialBase: topDownDrive() is not supported"); }
 
@@ -101,22 +57,20 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
-	private class MecanumBase implements Types.Drivable {
+	private class MecanumBase implements Drivable {
 
 		private final MotorController[] motors = new MotorController[4];
 		private final MecanumDrive drive;
-		private final Types.DBS settings;
 
-		public<M extends MotorController> MecanumBase(Types.DB4<M> map, Types.DBS s) {
+		public<M extends MotorController> MecanumBase(DriveMap_4<M> map) {
 			this.motors[0] = map.front_left;
 			this.motors[1] = map.back_left;
 			this.motors[2] = map.front_right;
 			this.motors[3] = map.back_right;
 			this.drive = new MecanumDrive(this.motors[0], this.motors[1], this.motors[2], this.motors[3]);
-			this.settings = s;
 		}
 
-		@Override public Types.DriveLayout getLayout() { return Types.DriveLayout.MECANUM; }
+		@Override public DriveLayout getLayout() { return DriveLayout.MECANUM; }
 		@Override public MotorController[] getMotors() { return this.motors; }
 
 		@Override public void tankDrive(double l, double r) { System.out.println("MecanumBase: tankDrive() is not implemented yet"); }
@@ -144,21 +98,19 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
-	private class KilloughBase implements Types.Drivable {
+	private class KilloughBase implements Drivable {
 
 		private final MotorController[] motors = new MotorController[3];
 		private final KilloughDrive drive;
-		private final Types.DBS settings;
 
-		public<M extends MotorController> KilloughBase(Types.DB3<M> map, Types.DBS s) {
+		public<M extends MotorController> KilloughBase(DriveMap_3<M> map) {
 			this.motors[0] = map.left;
 			this.motors[1] = map.right;
 			this.motors[2] = map.mid;
 			this.drive = new KilloughDrive(this.motors[0], this.motors[1], this.motors[2]);
-			this.settings = s;
 		}
 
-		@Override public Types.DriveLayout getLayout() { return Types.DriveLayout.KILLOUGH; }
+		@Override public DriveLayout getLayout() { return DriveLayout.KILLOUGH; }
 		@Override public MotorController[] getMotors() { return this.motors; }
 
 		@Override public void tankDrive(double l, double r) { System.out.println("KilloughBase: tankDrive() is not supported"); }
@@ -168,7 +120,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public void topDownDrive(double x,  double y, double rot) { this.drive.driveCartesian(y, x, rot); }
 
 		@Override public void autoTurn(double v) {
-			applyAll(this.motors, v);
+			Helper.applyAll(this.motors, v);
 			this.drive.feed();
 		}
 		@Override public void autoDrive(double l, double r) {
@@ -182,7 +134,7 @@ public class DriveBase extends SubsystemBase {
 	}
 
 
-	private final Types.Drivable drive;
+	private final Drivable drive;
 	private final Idle idle_command;
 	private Decelerate decelerate_command;
 	private TankDrive tank_command = new TankDrive(this, ()->0.0, ()->0.0);
@@ -191,33 +143,30 @@ public class DriveBase extends SubsystemBase {
 	private CurvatureDrive curvature_command = new CurvatureDrive(this, ()->0.0, ()->0.0, ()->false);
 	private TopDownDrive topdown_command = new TopDownDrive(this, ()->0.0, ()->0.0, ()->0.0);
 
-	public<M extends MotorController> DriveBase(Types.DB2<M> map, Types.DBS s) {
-		this.drive = new DifferentialBase(map, s);
-		this.decelerate_command = new Decelerate(this, s.s_deceleration);
+	public<M extends MotorController> DriveBase(DriveMap_2<M> map) {
+		this.drive = new DifferentialBase(map);
 		this.idle_command = new Idle(this);
 		super.setDefaultCommand(this.idle_command);
 	}
-	public<M extends MotorController> DriveBase(Types.DB3<M> map, Types.DBS s) {
-		this.drive = new KilloughBase(map, s);
-		this.decelerate_command = new Decelerate(this, s.s_deceleration);
+	public<M extends MotorController> DriveBase(DriveMap_3<M> map) {
+		this.drive = new KilloughBase(map);
 		this.idle_command = new Idle(this);
 		super.setDefaultCommand(this.idle_command);
 	}
-	public<M extends MotorController> DriveBase(Types.DB4<M> map, Types.DBS s) {
-		this.decelerate_command = new Decelerate(this, s.s_deceleration);
+	public<M extends MotorController> DriveBase(DriveMap_4<M> map) {
 		this.idle_command = new Idle(this);
 		super.setDefaultCommand(this.idle_command);
 		switch(map.layout) {
 			case MECANUM: 
-				this.drive = new MecanumBase(map, s);
+				this.drive = new MecanumBase(map);
 				break;
 			case DIFFERENTIAL: 
 			default:
-				this.drive = new DifferentialBase(map, s);
+				this.drive = new DifferentialBase(map);
 				break;
 		}
 	}
-	// protected DriveBase(Types.DriveLayout l) {
+	// protected DriveBase(DriveLayout l) {
 	// 	this.idle_command = new Idle(this);
 	// 	switch(l) {
 	// 		case DIFFERENTIAL:
@@ -252,20 +201,14 @@ public class DriveBase extends SubsystemBase {
 		protected void autoDrive(double l, double r) { this.drivebase.drive.autoDrive(l, r); }
 
 		protected void fromLast(double p) { 
-			applyPercentage(this.drivebase.drive.getMotors(), p); 
+			Helper.applyPercentage(this.drivebase.drive.getMotors(), p); 
 			this.drivebase.drive.feed();
 		}
 
-		protected Types.Drivable getDrive() {
+		protected Drivable getDrive() {
 			return this.drivebase.drive;
 		}
 
-	}
-
-	public Decelerate decelerate() { return this.decelerate_command; }
-	public Decelerate decelerate(Types.Deceleration a) {
-		this.decelerate_command = new Decelerate(this, a);
-		return this.decelerate_command;
 	}
 
 	public TankDrive tankDrive() { return this.tank_command; }
@@ -293,6 +236,11 @@ public class DriveBase extends SubsystemBase {
 		this.topdown_command = new TopDownDrive(this, x, y, rot); 
 		return this.topdown_command;
 	}
+	public Decelerate decelerate() { return this.decelerate_command; }
+	public Decelerate decelerate(Deceleration a) {
+		this.decelerate_command = new Decelerate(this, a);
+		return this.decelerate_command;
+	}
 	
 
 	public static class TankDrive extends DriveCommandBase {
@@ -304,7 +252,7 @@ public class DriveBase extends SubsystemBase {
 			this.right = r;
 		}
 		@Override public void initialize() {
-			if(!this.drivebase.drive.getLayout().supports(Types.DriveMode.TANK)) {
+			if(!this.drivebase.drive.getLayout().supports(DriveMode.TANK)) {
 				System.out.println("TankDrive(Command): Drivebase does not support drive mode!");
 				this.cancel();
 			}
@@ -325,7 +273,7 @@ public class DriveBase extends SubsystemBase {
 			this.rotation = rot;
 		}
 		@Override public void initialize() {
-			if(!this.drivebase.drive.getLayout().supports(Types.DriveMode.ARCADE)) {
+			if(!this.drivebase.drive.getLayout().supports(DriveMode.ARCADE)) {
 				System.out.println("ArcadeDrive(Command): Drivebase does not support drive mode!");
 				this.cancel();
 			}
@@ -347,7 +295,7 @@ public class DriveBase extends SubsystemBase {
 			this.rotation = rot;
 		}
 		@Override public void initialize() {
-			if(!this.drivebase.drive.getLayout().supports(Types.DriveMode.RACE)) {
+			if(!this.drivebase.drive.getLayout().supports(DriveMode.RACE)) {
 				System.out.println("RaceDrive(Command): Drivebase does not support drive mode!");
 				this.cancel();
 			}
@@ -370,7 +318,7 @@ public class DriveBase extends SubsystemBase {
 			this.qstop = qs;
 		}
 		@Override public void initialize() {
-			if(!this.drivebase.drive.getLayout().supports(Types.DriveMode.CURVATURE)) {
+			if(!this.drivebase.drive.getLayout().supports(DriveMode.CURVATURE)) {
 				System.out.println("CurvatureDrive(Command): Drivebase does not support drive mode!");
 				this.cancel();
 			}
@@ -392,7 +340,7 @@ public class DriveBase extends SubsystemBase {
 			this.rotation = rot;
 		}
 		@Override public void initialize() {
-			if(!this.drivebase.drive.getLayout().supports(Types.DriveMode.TOP)) {
+			if(!this.drivebase.drive.getLayout().supports(DriveMode.TOP)) {
 				System.out.println("TopDownDrive(Command): Drivebase does not support drive mode!");
 				this.cancel();
 			}
@@ -407,18 +355,18 @@ public class DriveBase extends SubsystemBase {
 
 	public static class Decelerate extends DriveCommandBase {
 		
-		private final Types.Deceleration constant;
-		public Decelerate(DriveBase db, Types.Deceleration c) {
+		private final Deceleration constant;
+		public Decelerate(DriveBase db, Deceleration c) {
 			super(db);
 			this.constant = c;
 		}
 		@Override public void initialize() { System.out.println("Decelerating..."); }
 		@Override public void execute() { 
-			DriveBase.applyDeceleration(this.constant, this.drivebase.drive.getMotors());
+			Helper.applyDeceleration(this.constant, this.drivebase.drive.getMotors());
 			this.drivebase.drive.feed();
 		}
 		@Override public void end(boolean i) {
-			DriveBase.applyStop(this.drivebase.drive.getMotors());
+			Helper.applyStop(this.drivebase.drive.getMotors());
 			this.drivebase.drive.feed();
 		}
 		@Override public boolean isFinished() {
@@ -434,12 +382,12 @@ public class DriveBase extends SubsystemBase {
 		public Idle(DriveBase db) {
 			super(db);
 		}
-		//@Override public void initialize() { applyStop(this.drivebase.drive.getMotors()); }
+		@Override public void initialize() { System.out.println("DriveBase Idling..."); }
 		@Override public void execute() { 
-			applyStop(this.drivebase.drive.getMotors());
+			Helper.applyStop(this.drivebase.drive.getMotors());
 			this.drivebase.drive.feed(); 
-			System.out.println("DriveBase Idling...");
 		}
+		@Override public void end(boolean i) { System.out.println("Idling Stopped."); }
 		@Override public boolean isFinished() { return false; }
 
 	}
