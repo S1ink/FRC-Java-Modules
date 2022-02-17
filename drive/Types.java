@@ -94,6 +94,10 @@ public class Types {
         public DriveModes(DriveMode m) {
             this.index = m.index;
         }
+        public DriveModes(DriveMode[] options) {
+            this.modes = options;
+            this.index = 0;
+        }
         public DriveModes(DriveMode m, DriveMode[] options) {
             this.modes = options;
             for(int i = 0; i < this.modes.length; i++) {
@@ -148,6 +152,25 @@ public class Types {
                 this.index -= v;
             }
             return this.modes[this.index];
+        }
+
+        public static DriveMode[] filter(DriveMode[] base, DriveMode[] filter) {
+            DriveMode[] f = new DriveMode[filter.length];
+            int filtersize = 0;
+            for(int i = 0; i < filter.length; i++) {
+                for(int b = 0; b < base.length; b++) {
+                    if(filter[i] == base[b]) {
+                        f[i] = filter[i];
+                        filtersize++;
+                        break;
+                    }
+                }
+            }
+            DriveMode[] ret = new DriveMode[filtersize];
+            for(int i = 0; i < filtersize; i++) {
+                ret[i] = f[i];
+            }
+            return ret;
         }
 
     }

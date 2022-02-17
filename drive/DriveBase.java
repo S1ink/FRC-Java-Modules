@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.modules.common.Input;
+import frc.robot.modules.common.Input.*;
 import frc.robot.modules.common.drive.Types.*;
 
 
@@ -142,15 +143,18 @@ public class DriveBase extends SubsystemBase {
 	private RaceDrive race_command = new RaceDrive(this, ()->0.0, ()->0.0, ()->0.0);
 	private CurvatureDrive curvature_command = new CurvatureDrive(this, ()->0.0, ()->0.0, ()->false);
 	private TopDownDrive topdown_command = new TopDownDrive(this, ()->0.0, ()->0.0, ()->0.0);
+	private ModeDrive modedrive_command;
 
 	public<M extends MotorController> DriveBase(DriveMap_2<M> map) {
 		this.drive = new DifferentialBase(map);
 		this.idle_command = new Idle(this);
+		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
 		super.setDefaultCommand(this.idle_command);
 	}
 	public<M extends MotorController> DriveBase(DriveMap_3<M> map) {
 		this.drive = new KilloughBase(map);
 		this.idle_command = new Idle(this);
+		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
 		super.setDefaultCommand(this.idle_command);
 	}
 	public<M extends MotorController> DriveBase(DriveMap_4<M> map) {
@@ -165,6 +169,7 @@ public class DriveBase extends SubsystemBase {
 				this.drive = new DifferentialBase(map);
 				break;
 		}
+		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
 	}
 	// protected DriveBase(DriveLayout l) {
 	// 	this.idle_command = new Idle(this);
@@ -236,6 +241,27 @@ public class DriveBase extends SubsystemBase {
 		this.topdown_command = new TopDownDrive(this, x, y, rot); 
 		return this.topdown_command;
 	}
+	public ModeDrive modeDrive() { return this.modedrive_command; } 
+	public ModeDrive modeDrive(AnalogSupplier x, AnalogSupplier y, DigitalSupplier inc, DigitalSupplier dec) {
+		this.modedrive_command = new ModeDrive(this, x, y, inc, dec);
+		return this.modedrive_command;
+	}
+	public ModeDrive modeDrive(
+		AnalogSupplier lx, AnalogSupplier ly,
+		AnalogSupplier rx, AnalogSupplier ry,
+		DigitalSupplier inc, DigitalSupplier dec
+	) {
+		this.modedrive_command = new ModeDrive(this, lx, ly, rx, ry, inc, dec);
+		return this.modedrive_command;
+	}
+	public ModeDrive modeDrive(
+		AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier lt,
+		AnalogSupplier rx, AnalogSupplier ry, AnalogSupplier rt,
+		DigitalSupplier inc, DigitalSupplier dec
+	) {
+		this.modedrive_command = new ModeDrive(this, lx, ly, lt, rx, ry, rt, inc, dec);
+		return this.modedrive_command;
+	}
 	public Decelerate decelerate() { return this.decelerate_command; }
 	public Decelerate decelerate(Deceleration a) {
 		this.decelerate_command = new Decelerate(this, a);
@@ -260,9 +286,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public void execute() {
 			this.drivebase.drive.tankDrive(this.left.get() * -1, this.right.get() * -1);
 		}
-		@Override public boolean isFinished() {
-			return false;
-		}
+		@Override public boolean isFinished() { return false; }
 	}
 	public static class ArcadeDrive extends DriveCommandBase {
 		
@@ -281,9 +305,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public void execute() {
 			this.drivebase.drive.arcadeDrive(this.speed.get(), this.rotation.get());
 		}
-		@Override public boolean isFinished() {
-			return false;
-		}
+		@Override public boolean isFinished() { return false; }
 	}
 	public static class RaceDrive extends DriveCommandBase {
 		
@@ -303,9 +325,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public void execute() {
 			this.drivebase.drive.raceDrive(this.forward.get(), this.backward.get(), this.rotation.get());
 		}
-		@Override public boolean isFinished() {
-			return false;
-		}
+		@Override public boolean isFinished() { return false; }
 	}
 	public static class CurvatureDrive extends DriveCommandBase {
 		
@@ -326,9 +346,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public void execute() {
 			this.drivebase.drive.curvatureDrive(this.speed.get(), this.rotation.get(), this.qstop.get());
 		}
-		@Override public boolean isFinished() {
-			return false;
-		}
+		@Override public boolean isFinished() { return false; }
 	}
 	public static class TopDownDrive extends DriveCommandBase {
 		
@@ -348,12 +366,120 @@ public class DriveBase extends SubsystemBase {
 		@Override public void execute() {
 			this.drivebase.drive.topDownDrive(this.xspeed.get(), this.yspeed.get(), this.rotation.get());
 		}
-		@Override public boolean isFinished() {
-			return false;
-		}
+		@Override public boolean isFinished() { return false; }
 	}
 
-	public static class Decelerate extends DriveCommandBase {
+	private static class ModeDrive extends DriveCommandBase {
+
+		private final AnalogSupplier 
+			left_x,
+			left_y,
+			left_t,
+			right_x,
+			right_y,
+			right_t;
+		public final DigitalSupplier
+			increment,
+			decrement;
+		private final DriveModes mode;
+		public ModeDrive(	// single stick
+			DriveBase db,
+			AnalogSupplier x, AnalogSupplier y,
+			DigitalSupplier inc, DigitalSupplier dec
+		) {
+			super(db);
+			this.left_x = ()->0.0;
+			this.left_y = ()->0.0;
+			this.left_t = ()->0.0;
+			this.right_x = x;
+			this.right_y = y;
+			this.right_t = ()->0.0;
+			this.increment = inc;
+			this.decrement = dec;
+			this.mode = new DriveModes(
+				DriveModes.filter(	// filter options so something that isn't supported never gets called
+					super.getDrive().getLayout().supported, 
+					new DriveMode[]{DriveMode.ARCADE, DriveMode.CURVATURE}
+				)
+			);
+		}
+		public ModeDrive(	// dual stick
+			DriveBase db,
+			AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier rx, AnalogSupplier ry,
+			DigitalSupplier inc, DigitalSupplier dec
+		) {
+			super(db);
+			this.left_x = lx;
+			this.left_y = ly;
+			this.left_t = ()->0.0;
+			this.right_x = rx;
+			this.right_y = ry;
+			this.right_t = ()->0.0;
+			this.increment = inc;
+			this.decrement = dec;
+			this.mode = new DriveModes(
+				DriveModes.filter(	// filter options so something that isn't supported never gets called
+					super.getDrive().getLayout().supported, 
+					new DriveMode[]{DriveMode.TANK, DriveMode.ARCADE, DriveMode.CURVATURE, DriveMode.TOP}
+				)
+			);
+		}
+		public ModeDrive(	// 2 sticks, 2 triggers
+			DriveBase db,
+			AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier lt,
+			AnalogSupplier rx, AnalogSupplier ry, AnalogSupplier rt,
+			DigitalSupplier inc, DigitalSupplier dec
+		) {
+			super(db);
+			this.left_x = lx;
+			this.left_y = ly;
+			this.left_t = lt;
+			this.right_x = rx;
+			this.right_y = ry;
+			this.right_t = rt;
+			this.increment = inc;
+			this.decrement = dec;
+			this.mode = new DriveModes(
+				super.getDrive().getLayout().supported
+			);
+		}
+		@Override public void initialize() {
+			System.out.println("ModeDrive: Running...");
+		}
+		@Override public void execute() {
+			if(this.increment.get()) {
+				this.mode.increment();
+				System.out.println("Mode incremented: " + this.mode.get().name());
+			}
+			if(this.decrement.get()) {
+				this.mode.decrement();
+				System.out.println("Mode decremented: " + this.mode.get().name());
+			}
+			switch(this.mode.get()) {
+				case TANK:
+					super.tankDrive(this.left_y.get(), this.right_y.get());
+					break;
+				case ARCADE:
+					super.arcadeDrive(this.right_y.get(), this.right_x.get());
+					break;
+				case RACE:
+					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_y.get());
+					break;
+				case CURVATURE:
+					super.curvatureDrive(this.right_y.get(), this.right_x.get(), false);	// << possbily use an axis to get this boolean
+					break;
+				case TOP:
+					super.topDownDrive(this.left_x.get(), this.left_y.get(), this.right_x.get());
+					break;
+				default:
+					super.arcadeDrive(this.right_y.get(), this.right_x.get());	// default because it should always be supported
+			}
+		}
+		@Override public boolean isFinished() { return false; }
+
+	}
+
+	private static class Decelerate extends DriveCommandBase {
 		
 		private final Deceleration constant;
 		public Decelerate(DriveBase db, Deceleration c) {
@@ -377,7 +503,7 @@ public class DriveBase extends SubsystemBase {
 		}
 
 	}
-	private class Idle extends DriveCommandBase {
+	private static class Idle extends DriveCommandBase {
 		
 		public Idle(DriveBase db) {
 			super(db);

@@ -249,11 +249,27 @@ public class Input {
             }
             return ()->false;
         }
+        default DigitalSupplier getPressedSupplier(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return ()->i.getRawButtonPressed(this.getValue());
+            }
+            return ()->false;
+        }
         default DigitalSupplier getSupplier(int p) {
             if(this.isPovBindOf(p)) {
                 return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
             } else if(this.compatible(p)) {
                 return ()->DriverStation.getStickButton(p, this.getValue());
+            }
+            return ()->false;
+        }
+        default DigitalSupplier getPressedSupplier(int p) {
+            if(this.isPovBindOf(p)) {
+                return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return ()->DriverStation.getStickButtonPressed(p, this.getValue());
             }
             return ()->false;
         }
