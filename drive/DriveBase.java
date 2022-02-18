@@ -22,6 +22,7 @@ public class DriveBase extends SubsystemBase {
 
 		private final MotorController[] motors = new MotorController[2];
 		private final DifferentialDrive drive;
+		private boolean squaring = false;
 
 		public<M extends MotorController> DifferentialBase(DriveMap_2<M> map) {
 			this.motors[0] = map.left;
@@ -37,9 +38,9 @@ public class DriveBase extends SubsystemBase {
 		@Override public DriveLayout getLayout() { return DriveLayout.DIFFERENTIAL; }
 		@Override public MotorController[] getMotors() { return this.motors; }
 
-		@Override public void tankDrive(double l, double r) { drive.tankDrive(l, r, false); }
-		@Override public void arcadeDrive(double s, double rot) { drive.arcadeDrive(s, rot, false); }
-		@Override public void raceDrive(double f, double b, double rot) { drive.arcadeDrive(f-b, rot, false); }
+		@Override public void tankDrive(double l, double r) { drive.tankDrive(l, r, this.squaring); }
+		@Override public void arcadeDrive(double s, double rot) { drive.arcadeDrive(s, rot, this.squaring); }
+		@Override public void raceDrive(double f, double b, double rot) { drive.arcadeDrive(f-b, rot, this.squaring); }
 		@Override public void curvatureDrive(double s, double rot, boolean q) { drive.curvatureDrive(s, rot, q); }
 		@Override public void topDownDrive(double x,  double y, double rot) { System.out.println("DifferentialBase: topDownDrive() is not supported"); }
 
@@ -55,6 +56,9 @@ public class DriveBase extends SubsystemBase {
 		}
 
 		@Override public void feed() { this.drive.feed(); }
+		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
+		@Override public void setDeadband(double d) { this.drive.setDeadband(d); }
+		@Override public void setSquaring(boolean s) { this.squaring = s; }
 
 
 	}
@@ -96,6 +100,8 @@ public class DriveBase extends SubsystemBase {
 		}
 
 		@Override public void feed() { this.drive.feed(); }
+		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
+		@Override public void setDeadband(double d) { this.drive.setDeadband(d); }
 
 
 	}
@@ -130,6 +136,8 @@ public class DriveBase extends SubsystemBase {
 		}
 
 		@Override public void feed() { this.drive.feed(); }
+		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
+		@Override public void setDeadband(double d) { this.drive.setDeadband(d); }
 
 
 	}
@@ -171,23 +179,16 @@ public class DriveBase extends SubsystemBase {
 		}
 		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
 	}
-	// protected DriveBase(DriveLayout l) {
-	// 	this.idle_command = new Idle(this);
-	// 	switch(l) {
-	// 		case DIFFERENTIAL:
-	// 			this.drive = new DifferentialBase();
-	// 			break;
-	// 		case MECANUM:
-	// 			this.drive = new MecanumBase();
-	// 			break;
-	// 		case KILLOUGH:
-	// 			this.drive = new KilloughBase();
-	// 			break;
-	// 		case SWERVE:
-	// 		default:
-	// 			this.drive = null;
-	// 	}
-	// }
+
+	public void setSpeedScaling(double s) {
+		this.drive.setScaling(s);
+	}
+	public void setSpeedDeadband(double d) {
+		this.drive.setDeadband(d);
+	}
+	public void setSpeedSquaring(boolean s) {
+		this.drive.setSquaring(s);
+	}
 
 	// Extend this class to gain access to direct control methods
 	public static abstract class DriveCommandBase extends CommandBase {
@@ -463,16 +464,16 @@ public class DriveBase extends SubsystemBase {
 					super.arcadeDrive(this.right_y.get(), this.right_x.get());
 					break;
 				case RACE:
-					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_y.get());
+					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_x.get());
 					break;
 				case CURVATURE:
-					super.curvatureDrive(this.right_y.get(), this.right_x.get(), false);	// << possbily use an axis to get this boolean
+					super.curvatureDrive(this.right_y.get(), this.right_x.get(), this.right_t.get() >= 0.5);
 					break;
 				case TOP:
 					super.topDownDrive(this.left_x.get(), this.left_y.get(), this.right_x.get());
 					break;
 				default:
-					super.arcadeDrive(this.right_y.get(), this.right_x.get());	// default because it should always be supported
+					super.arcadeDrive(this.right_y.get(), this.right_x.get());	// default because it should always be supported (single stick prereq)
 			}
 		}
 		@Override public boolean isFinished() { return false; }

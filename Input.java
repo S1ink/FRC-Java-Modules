@@ -1,10 +1,11 @@
 package frc.robot.modules.common;
 
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.DriverStation;
+
 
 public class Input {
 
@@ -241,19 +242,43 @@ public class Input {
             }
             return false;
         }
+        default boolean getPressedValueOf(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return (i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return i.getRawButtonPressed(this.getValue());
+            }
+            return false;
+        }
+        default boolean getPressedValueOf(int p) {
+            if(this.isPovBindOf(p)) {
+                return (DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return DriverStation.getStickButtonPressed(p, this.getValue());
+            }
+            return false;
+        }
+        default boolean getReleasedValueOf(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return (i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return i.getRawButtonReleased(this.getValue());
+            }
+            return false;
+        }
+        default boolean getReleasedValueOf(int p) {
+            if(this.isPovBindOf(p)) {
+                return (DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return DriverStation.getStickButtonReleased(p, this.getValue());
+            }
+            return false;
+        }
         default DigitalSupplier getSupplier(GenericHID i) {
             if(this.isPovBindOf(i)) {
                 return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
             } else if(this.compatible(i)) {
                 return ()->i.getRawButton(this.getValue());
-            }
-            return ()->false;
-        }
-        default DigitalSupplier getPressedSupplier(GenericHID i) {
-            if(this.isPovBindOf(i)) {
-                return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
-            } else if(this.compatible(i)) {
-                return ()->i.getRawButtonPressed(this.getValue());
             }
             return ()->false;
         }
@@ -265,11 +290,35 @@ public class Input {
             }
             return ()->false;
         }
+        default DigitalSupplier getPressedSupplier(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return ()->i.getRawButtonPressed(this.getValue());
+            }
+            return ()->false;
+        }
         default DigitalSupplier getPressedSupplier(int p) {
             if(this.isPovBindOf(p)) {
                 return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
             } else if(this.compatible(p)) {
                 return ()->DriverStation.getStickButtonPressed(p, this.getValue());
+            }
+            return ()->false;
+        }
+        default DigitalSupplier getReleasedSupplier(GenericHID i) {
+            if(this.isPovBindOf(i)) {
+                return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
+            } else if(this.compatible(i)) {
+                return ()->i.getRawButtonReleased(this.getValue());
+            }
+            return ()->false;
+        }
+        default DigitalSupplier getReleasedSupplier(int p) {
+            if(this.isPovBindOf(p)) {
+                return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
+            } else if(this.compatible(p)) {
+                return ()->DriverStation.getStickButtonReleased(p, this.getValue());
             }
             return ()->false;
         }

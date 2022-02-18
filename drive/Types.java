@@ -52,6 +52,9 @@ public class Types {
         public void autoDrive(double l, double r);
 
 		public void feed();
+        public void setScaling(double s);
+        public void setDeadband(double d);
+        default public void setSquaring(boolean s) { System.out.println("Squaring not implemented on this drive layout"); }
     
 	}
 	// public static interface Drivable<D extends RobotDriveBase> {
