@@ -1,5 +1,6 @@
 package frc.robot.modules.common;
 
+import java.util.function.BooleanSupplier;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
@@ -7,12 +8,37 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 public class LambdaCommand extends CommandBase {
 
 	private final Runnable run;
+	private final boolean when_disabled;
 	public LambdaCommand(Runnable r) {
 		this.run = r;
+		this.when_disabled = true;
 	}
-	@Override public void initialize() { run.run(); }
+	public LambdaCommand(Runnable r, boolean wd) {
+		this.run = r;
+		this.when_disabled = wd;
+	}
+	@Override public void initialize() { this.run.run(); }
 	@Override public boolean isFinished() { return true; }
-	@Override public boolean runsWhenDisabled() { return true; }
+	@Override public boolean runsWhenDisabled() { return this.when_disabled; }
+
+
+	public static class Continuous extends LambdaCommand {
+
+		private final BooleanSupplier is_finished;
+		public Continuous(Runnable r, BooleanSupplier f, boolean wd) {
+			super(r, wd);
+			this.is_finished = f;
+		}
+		public Continuous(Runnable r) { this(r, ()->false, true); }
+		public Continuous(Runnable r, boolean wd) { this(r, ()->false, wd); }
+		public Continuous(Runnable r, BooleanSupplier f) { this(r, f, true); }
+		
+		@Override public void initialize() {}
+		@Override public void execute() { super.run.run(); }
+		@Override public boolean isFinished() { return this.is_finished.getAsBoolean(); }
+
+
+	}
 
 
 }

@@ -461,13 +461,13 @@ public class DriveBase extends SubsystemBase {
 					super.tankDrive(this.left_y.get(), this.right_y.get());
 					break;
 				case ARCADE:
-					super.arcadeDrive(this.right_y.get(), this.right_x.get());
+					super.arcadeDrive(this.right_y.get(), this.right_x.get()*-1);	// for some reason the steering is inverted
 					break;
 				case RACE:
-					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_x.get());
+					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_x.get()*-1);
 					break;
 				case CURVATURE:
-					super.curvatureDrive(this.right_y.get(), this.right_x.get(), this.right_t.get() >= 0.5);
+					super.curvatureDrive(this.right_y.get(), this.right_x.get()*-1, this.right_t.get() >= 0.5);
 					break;
 				case TOP:
 					super.topDownDrive(this.left_x.get(), this.left_y.get(), this.right_x.get());
