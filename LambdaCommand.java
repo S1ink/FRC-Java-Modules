@@ -40,5 +40,25 @@ public class LambdaCommand extends CommandBase {
 
 	}
 
+	public static class Singular extends LambdaCommand {
+
+		boolean hasrun = false;
+		public Singular(Runnable r) {
+			super(r);
+		}
+		public Singular(Runnable r, boolean wd) {
+			super(r, wd);
+		}
+
+		@Override public void initialize() {
+			if(!this.hasrun) {
+				super.initialize();
+				this.hasrun = true;
+			}
+		}
+
+
+	}
+
 
 }

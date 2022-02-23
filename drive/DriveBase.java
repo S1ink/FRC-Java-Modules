@@ -190,7 +190,7 @@ public class DriveBase extends SubsystemBase {
 		this.drive.setSquaring(s);
 	}
 
-	// Extend this class to gain access to direct control methods
+	/**Extend this class to gain access to direct control methods*/
 	public static abstract class DriveCommandBase extends CommandBase {
 		protected final DriveBase drivebase;
 		protected DriveCommandBase(DriveBase db) {
