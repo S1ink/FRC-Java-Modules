@@ -1,8 +1,7 @@
 package frc.robot.modules.common.drive;
 
-//import edu.wpi.first.wpilibj.drive.RobotDriveBase;
-import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.motorcontrol.*;
+import frc.robot.modules.common.drive.Motors.MotorSupplier;
 
 
 public class Types {
@@ -188,8 +187,6 @@ public class Types {
         private Deceleration(double v) { this.value = v; }
         public String toString() { return "Deceleration@" + this.hashCode() + ": " + this.value; }
     }
-
-	public static interface MotorSupplier<M extends MotorController> { M create(int p); }
 
     public static class DrivePortMap_2 {
 
