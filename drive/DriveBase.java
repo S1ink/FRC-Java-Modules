@@ -370,7 +370,7 @@ public class DriveBase extends SubsystemBase {
 		@Override public boolean isFinished() { return false; }
 	}
 
-	private static class ModeDrive extends DriveCommandBase {
+	public static class ModeDrive extends DriveCommandBase {
 
 		private final AnalogSupplier 
 			left_x,

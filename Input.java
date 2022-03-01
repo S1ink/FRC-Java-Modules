@@ -231,6 +231,15 @@ public class Input {
             }
             return PovButton.dummy;
         }
+        default ToggleTrigger getToggleFrom(InputDevice i) {
+            return new ToggleTrigger(getCallbackFrom(i));
+        }
+        default ToggleTrigger getToggleFrom(GenericHID i) {
+            return new ToggleTrigger(getCallbackFrom(i));
+        }
+        default ToggleTrigger getToggleFrom(int p) {
+            return new ToggleTrigger(getCallbackFrom(p));
+        }
         default boolean getValueOf(GenericHID i) {
             if(this.isPovBindOf(i)) {
                 return (i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
