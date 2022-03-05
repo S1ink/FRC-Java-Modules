@@ -1,15 +1,11 @@
 package frc.robot.modules.common.drive;
 
-import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-//import edu.wpi.first.wpilibj.drive.RobotDriveBase;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.drive.MecanumDrive;
-import edu.wpi.first.wpilibj.drive.KilloughDrive;
-// make swerve drive if that is ever relevant
-
 //import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj.motorcontrol.*;
+import edu.wpi.first.wpilibj.drive.*;
+// make swerve drive if that is ever relevant
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 import frc.robot.modules.common.Input;
 import frc.robot.modules.common.Input.*;
@@ -192,11 +188,14 @@ public class DriveBase extends SubsystemBase {
 
 	/**Extend this class to gain access to direct control methods*/
 	public static abstract class DriveCommandBase extends CommandBase {
+
 		protected final DriveBase drivebase;
+
 		protected DriveCommandBase(DriveBase db) {
 			this.drivebase = db;
 			super.addRequirements(db);
 		}
+
 		protected void tankDrive(double l, double r) { this.drivebase.drive.tankDrive(l, r); }
 		protected void arcadeDrive(double s, double rot) { this.drivebase.drive.arcadeDrive(s, rot); }
 		protected void raceDrive(double f, double b, double rot) { this.drivebase.drive.raceDrive(f, b, rot); }
@@ -214,6 +213,35 @@ public class DriveBase extends SubsystemBase {
 		protected Drivable getDrive() {
 			return this.drivebase.drive;
 		}
+
+
+	}
+	public static abstract class RateLimitedAutoDrive extends DriveCommandBase {
+
+		protected final SlewRateLimiter t_limit, d_limit;
+
+		protected RateLimitedAutoDrive(DriveBase db) {
+			super(db);
+			this.t_limit = new SlewRateLimiter(Double.MAX_VALUE);
+			this.d_limit = new SlewRateLimiter(Double.MAX_VALUE);
+		}
+		protected RateLimitedAutoDrive(DriveBase db, double rlimit) {
+			super(db);
+			this.t_limit = new SlewRateLimiter(rlimit);
+			this.d_limit = new SlewRateLimiter(rlimit);
+		}
+
+		@Override protected void autoTurn(double v) {
+			super.drivebase.drive.autoTurn(this.t_limit.calculate(v));
+		}
+		@Override protected void autoDrive(double l, double r) {
+			double p = this.d_limit.calculate(Math.max(Math.abs(l), Math.abs(r)));
+			p /= Math.max(Math.abs(l), Math.abs(r));		// find proportion between input and output or max input
+			l *= p;		// scale each input by ^ so that the ratio remains constant between left and right
+			r *= p;		// ^^
+			super.drivebase.drive.autoDrive(l, r);
+		}
+
 
 	}
 
@@ -273,11 +301,13 @@ public class DriveBase extends SubsystemBase {
 	public static class TankDrive extends DriveCommandBase {
 		
 		private final Input.AnalogSupplier left, right;
+
 		public TankDrive(DriveBase db, Input.AnalogSupplier l, Input.AnalogSupplier r) {
 			super(db);
 			this.left = l;
 			this.right = r;
 		}
+
 		@Override public void initialize() {
 			if(!this.drivebase.drive.getLayout().supports(DriveMode.TANK)) {
 				System.out.println("TankDrive(Command): Drivebase does not support drive mode!");
@@ -288,15 +318,19 @@ public class DriveBase extends SubsystemBase {
 			this.drivebase.drive.tankDrive(this.left.get() * -1, this.right.get() * -1);
 		}
 		@Override public boolean isFinished() { return false; }
+
+
 	}
 	public static class ArcadeDrive extends DriveCommandBase {
 		
 		private final Input.AnalogSupplier speed, rotation;
+
 		public ArcadeDrive(DriveBase db, Input.AnalogSupplier s, Input.AnalogSupplier rot) {
 			super(db);
 			this.speed = s;
 			this.rotation = rot;
 		}
+
 		@Override public void initialize() {
 			if(!this.drivebase.drive.getLayout().supports(DriveMode.ARCADE)) {
 				System.out.println("ArcadeDrive(Command): Drivebase does not support drive mode!");
@@ -307,16 +341,20 @@ public class DriveBase extends SubsystemBase {
 			this.drivebase.drive.arcadeDrive(this.speed.get(), this.rotation.get());
 		}
 		@Override public boolean isFinished() { return false; }
+
+
 	}
 	public static class RaceDrive extends DriveCommandBase {
 		
 		private final Input.AnalogSupplier forward, backward, rotation;
+
 		public RaceDrive(DriveBase db, Input.AnalogSupplier f, Input.AnalogSupplier b, Input.AnalogSupplier rot) {
 			super(db);
 			this.forward = f;
 			this.backward = b;
 			this.rotation = rot;
 		}
+
 		@Override public void initialize() {
 			if(!this.drivebase.drive.getLayout().supports(DriveMode.RACE)) {
 				System.out.println("RaceDrive(Command): Drivebase does not support drive mode!");
@@ -327,17 +365,21 @@ public class DriveBase extends SubsystemBase {
 			this.drivebase.drive.raceDrive(this.forward.get(), this.backward.get(), this.rotation.get());
 		}
 		@Override public boolean isFinished() { return false; }
+
+
 	}
 	public static class CurvatureDrive extends DriveCommandBase {
 		
 		private final Input.AnalogSupplier speed, rotation;
 		private final Input.DigitalSupplier qstop;
+
 		public CurvatureDrive(DriveBase db, Input.AnalogSupplier s, Input.AnalogSupplier rot, Input.DigitalSupplier qs) {
 			super(db);
 			this.speed = s;
 			this.rotation = rot;
 			this.qstop = qs;
 		}
+
 		@Override public void initialize() {
 			if(!this.drivebase.drive.getLayout().supports(DriveMode.CURVATURE)) {
 				System.out.println("CurvatureDrive(Command): Drivebase does not support drive mode!");
@@ -348,16 +390,20 @@ public class DriveBase extends SubsystemBase {
 			this.drivebase.drive.curvatureDrive(this.speed.get(), this.rotation.get(), this.qstop.get());
 		}
 		@Override public boolean isFinished() { return false; }
+
+
 	}
 	public static class TopDownDrive extends DriveCommandBase {
 		
 		private final Input.AnalogSupplier xspeed, yspeed, rotation;
+
 		public TopDownDrive(DriveBase db, Input.AnalogSupplier x, Input.AnalogSupplier y, Input.AnalogSupplier rot) {
 			super(db);
 			this.xspeed = x;
 			this.yspeed = y;
 			this.rotation = rot;
 		}
+
 		@Override public void initialize() {
 			if(!this.drivebase.drive.getLayout().supports(DriveMode.TOP)) {
 				System.out.println("TopDownDrive(Command): Drivebase does not support drive mode!");
@@ -368,6 +414,8 @@ public class DriveBase extends SubsystemBase {
 			this.drivebase.drive.topDownDrive(this.xspeed.get(), this.yspeed.get(), this.rotation.get());
 		}
 		@Override public boolean isFinished() { return false; }
+
+
 	}
 
 	public static class ModeDrive extends DriveCommandBase {
@@ -383,6 +431,7 @@ public class DriveBase extends SubsystemBase {
 			increment,
 			decrement;
 		private final DriveModes mode;
+
 		public ModeDrive(	// single stick
 			DriveBase db,
 			AnalogSupplier x, AnalogSupplier y,
@@ -444,6 +493,7 @@ public class DriveBase extends SubsystemBase {
 				super.getDrive().getLayout().supported
 			);
 		}
+
 		@Override public void initialize() {
 			System.out.println("ModeDrive: Running...");
 		}
@@ -478,15 +528,18 @@ public class DriveBase extends SubsystemBase {
 		}
 		@Override public boolean isFinished() { return false; }
 
+
 	}
 
 	private static class Decelerate extends DriveCommandBase {
 		
 		private final Deceleration constant;
+
 		public Decelerate(DriveBase db, Deceleration c) {
 			super(db);
 			this.constant = c;
 		}
+
 		@Override public void initialize() { System.out.println("Decelerating..."); }
 		@Override public void execute() { 
 			Helper.applyDeceleration(this.constant, this.drivebase.drive.getMotors());
@@ -503,12 +556,14 @@ public class DriveBase extends SubsystemBase {
 			return true;
 		}
 
+
 	}
 	private static class Idle extends DriveCommandBase {
 		
 		public Idle(DriveBase db) {
 			super(db);
 		}
+
 		@Override public void initialize() { System.out.println("DriveBase Idling..."); }
 		@Override public void execute() { 
 			Helper.applyStop(this.drivebase.drive.getMotors());
@@ -516,6 +571,7 @@ public class DriveBase extends SubsystemBase {
 		}
 		@Override public void end(boolean i) { System.out.println("Idling Stopped."); }
 		@Override public boolean isFinished() { return false; }
+
 
 	}
 

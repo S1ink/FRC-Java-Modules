@@ -1,17 +1,48 @@
 package frc.robot.modules.common;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 
 public class Input {
 
-	public static interface AnalogSupplier { double get(); }
-    public static interface DigitalSupplier { boolean get(); }
+	public static interface AnalogSupplier extends DoubleSupplier {
+        double get();
+        @Override default double getAsDouble() { return get(); }
+    }
+    public static interface DigitalSupplier extends BooleanSupplier {
+        boolean get();
+        @Override default boolean getAsBoolean() { return get(); }
+    }
+
+    /**
+     * AnalogSlewSupplier limits the rate output (between calls) to a maximum of that given in units/sec
+     */
+    public static class AnalogSlewSupplier implements AnalogSupplier {
+
+        private final SlewRateLimiter limit;
+        private final AnalogSupplier source;
+
+        public AnalogSlewSupplier(AnalogSupplier src) { this(src, Double.MAX_VALUE); }  // kind of pointless?
+        public AnalogSlewSupplier(AnalogSupplier src, double mrate) {
+            this.limit = new SlewRateLimiter(mrate, src.get());
+            this.source = src;
+        }
+
+        @Override public double get() {
+            return this.limit.calculate(this.source.get());
+        }
+
+
+    }
 
 
     public static class InputDevice extends GenericHID {
@@ -178,6 +209,18 @@ public class Input {
                 return ()->DriverStation.getStickAxis(p, this.getValue());
             }
             return ()->0.0;
+        }
+        default AnalogSlewSupplier getLimitedSupplier(InputDevice i, double mrate) {
+            if(this.compatible(i)) {
+                return new AnalogSlewSupplier(()->i.getRawAxis(this.getValue()), mrate);
+            }
+            return new AnalogSlewSupplier(()->0.0);
+        }
+        default AnalogSlewSupplier getLimitedSupplier(int p, double mrate) {
+            if(this.compatible(p)) {
+                return new AnalogSlewSupplier(()->DriverStation.getStickAxis(p, this.getValue()), mrate);
+            }
+            return new AnalogSlewSupplier(()->0.0);
         }
     }
     public static interface DigitalMap {
