@@ -1,5 +1,6 @@
 package frc.robot.modules.common.drive;
 
+import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import frc.robot.modules.common.drive.Motors.MotorSupplier;
 
@@ -49,6 +50,7 @@ public class Types {
 
         public void autoTurn(double v); // turn by supplying "speed" -> positive for one direction, negative for the other
         public void autoDrive(double l, double r);
+        public void autoDriveVoltage(double lv, double rv);
 
 		public void feed();
         public void setScaling(double s);

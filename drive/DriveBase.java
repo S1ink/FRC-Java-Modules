@@ -50,6 +50,11 @@ public class DriveBase extends SubsystemBase {
 			this.motors[1].set(r);
 			this.drive.feed();
 		}
+		@Override public void autoDriveVoltage(double lv, double rv) {
+			this.motors[0].setVoltage(lv);
+			this.motors[1].setVoltage(rv);
+			this.drive.feed();
+		}
 
 		@Override public void feed() { this.drive.feed(); }
 		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
@@ -94,6 +99,13 @@ public class DriveBase extends SubsystemBase {
 			this.motors[3].set(r);
 			this.drive.feed();
 		}
+		@Override public void autoDriveVoltage(double lv, double rv) {
+			this.motors[0].setVoltage(lv);
+			this.motors[1].setVoltage(lv);
+			this.motors[2].setVoltage(rv);
+			this.motors[3].setVoltage(rv);
+			this.drive.feed();
+		}
 
 		@Override public void feed() { this.drive.feed(); }
 		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
@@ -127,6 +139,10 @@ public class DriveBase extends SubsystemBase {
 			this.drive.feed();
 		}
 		@Override public void autoDrive(double l, double r) {
+
+			this.drive.feed();
+		}
+		@Override public void autoDriveVoltage(double lv, double rv) {
 
 			this.drive.feed();
 		}
@@ -186,6 +202,10 @@ public class DriveBase extends SubsystemBase {
 		this.drive.setSquaring(s);
 	}
 
+	protected Drivable getDrive() {
+		return this.drive;
+	}
+
 	/**Extend this class to gain access to direct control methods*/
 	public static abstract class DriveCommandBase extends CommandBase {
 
@@ -204,6 +224,7 @@ public class DriveBase extends SubsystemBase {
 
 		protected void autoTurn(double v) { this.drivebase.drive.autoTurn(v); }
 		protected void autoDrive(double l, double r) { this.drivebase.drive.autoDrive(l, r); }
+		protected void autoDriveVoltage(double lv, double rv) { this.drivebase.drive.autoDriveVoltage(lv, rv); }
 
 		protected void fromLast(double p) { 
 			Helper.applyPercentage(this.drivebase.drive.getMotors(), p); 
