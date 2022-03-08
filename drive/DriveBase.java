@@ -205,6 +205,30 @@ public class DriveBase extends SubsystemBase {
 	protected Drivable getDrive() {
 		return this.drive;
 	}
+	protected void tankDrive(double l, double r, DriveCommandBase c) {
+		this.drive.tankDrive(l, r);
+	}
+	protected void arcadeDrive(double s, double rot, DriveCommandBase c) {
+		this.drive.arcadeDrive(s, rot);
+	}
+	protected void raceDrive(double f, double b, double rot, DriveCommandBase c) {
+		this.drive.raceDrive(f, b, rot);
+	}
+	protected void curvatureDrive(double s, double rot, boolean q, DriveCommandBase c) {
+		this.drive.curvatureDrive(s, rot, q);
+	}
+	protected void topDownDrive(double x, double y, double rot, DriveCommandBase c) {
+		this.drive.topDownDrive(x, y, rot);
+	}
+	protected void autoTurn(double v, DriveCommandBase c) {
+		this.drive.autoTurn(v);
+	}
+	protected void autoDrive(double l, double r, DriveCommandBase c) {
+		this.drive.autoDrive(l, r);
+	}
+	protected void autoDriveVoltage(double lv, double rv, DriveCommandBase c) {
+		this.drive.autoDriveVoltage(lv, rv);
+	}
 
 	/**Extend this class to gain access to direct control methods*/
 	public static abstract class DriveCommandBase extends CommandBase {
