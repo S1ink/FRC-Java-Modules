@@ -34,6 +34,8 @@ public class Types {
             this.left = l;
             this.right = r;
         }
+        public int leftSign() { return this.left ? -1 : 1; }
+        public int rightSign() { return this.right ? -1 : 1; }
         public String toString() { return "Inversions@" + this.hashCode() + ": {Left:" + this.left + " Right:" + this.right + "}"; }
     }
 
