@@ -248,6 +248,7 @@ public class DriveBase extends SubsystemBase {
 
 		protected void autoTurn(double v) { this.drivebase.drive.autoTurn(v); }
 		protected void autoDrive(double l, double r) { this.drivebase.drive.autoDrive(l, r); }
+		protected void autoTurnVoltage(double v) {this.drivebase.drive.autoDriveVoltage(v, -v); }
 		protected void autoDriveVoltage(double lv, double rv) { this.drivebase.drive.autoDriveVoltage(lv, rv); }
 
 		protected void fromLast(double p) { 
@@ -261,34 +262,34 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
-	public static abstract class RateLimitedAutoDrive extends DriveCommandBase {
+	// public static abstract class RateLimitedAutoDrive extends DriveCommandBase {
 
-		protected final SlewRateLimiter t_limit, d_limit;
+	// 	protected final SlewRateLimiter t_limit, d_limit;
 
-		protected RateLimitedAutoDrive(DriveBase db) {
-			super(db);
-			this.t_limit = new SlewRateLimiter(Double.MAX_VALUE);
-			this.d_limit = new SlewRateLimiter(Double.MAX_VALUE);
-		}
-		protected RateLimitedAutoDrive(DriveBase db, double rlimit) {
-			super(db);
-			this.t_limit = new SlewRateLimiter(rlimit);
-			this.d_limit = new SlewRateLimiter(rlimit);
-		}
+	// 	protected RateLimitedAutoDrive(DriveBase db) {
+	// 		super(db);
+	// 		this.t_limit = new SlewRateLimiter(Double.MAX_VALUE);
+	// 		this.d_limit = new SlewRateLimiter(Double.MAX_VALUE);
+	// 	}
+	// 	protected RateLimitedAutoDrive(DriveBase db, double rlimit) {
+	// 		super(db);
+	// 		this.t_limit = new SlewRateLimiter(rlimit);
+	// 		this.d_limit = new SlewRateLimiter(rlimit);
+	// 	}
 
-		@Override protected void autoTurn(double v) {
-			super.drivebase.drive.autoTurn(this.t_limit.calculate(v));
-		}
-		@Override protected void autoDrive(double l, double r) {
-			double p = this.d_limit.calculate(Math.max(Math.abs(l), Math.abs(r)));
-			p /= Math.max(Math.abs(l), Math.abs(r));		// find proportion between input and output or max input
-			l *= p;		// scale each input by ^ so that the ratio remains constant between left and right
-			r *= p;		// ^^
-			super.drivebase.drive.autoDrive(l, r);
-		}
+	// 	@Override protected void autoTurn(double v) {
+	// 		super.drivebase.drive.autoTurn(this.t_limit.calculate(v));
+	// 	}
+	// 	@Override protected void autoDrive(double l, double r) {
+	// 		double p = this.d_limit.calculate(Math.max(Math.abs(l), Math.abs(r)));
+	// 		p /= Math.max(Math.abs(l), Math.abs(r));		// find proportion between input and output or max input
+	// 		l *= p;		// scale each input by ^ so that the ratio remains constant between left and right
+	// 		r *= p;		// ^^
+	// 		super.drivebase.drive.autoDrive(l, r);
+	// 	}
 
 
-	}
+	// }
 
 	public TankDrive tankDrive() { return this.tank_command; }
 	public TankDrive tankDrive(Input.AnalogSupplier l, Input.AnalogSupplier r) { 
