@@ -1,5 +1,7 @@
 package frc.robot.modules.common;
 
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 
@@ -13,6 +15,7 @@ public class ToggleTrigger extends Trigger {
 	public ToggleTrigger(Trigger t) {
 		t.whenActive(()->this.is_triggered = !this.is_triggered);
 	}
+	public ToggleTrigger(BooleanSupplier t) { this(new Trigger(t)); }
 	
 	@Override public boolean get() {
 		return this.is_triggered;

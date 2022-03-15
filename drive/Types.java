@@ -229,6 +229,11 @@ public class Types {
             this.left = Helper.getInverted(t.create(l), i.left);
             this.right = Helper.getInverted(t.create(r), i.right);
         }
+        private DriveMap_2(M l, M r, int lp, int rp, Inversions i) {
+            super(lp, rp, i);
+            this.left = l;
+            this.right = r;
+        }
 
         public String toString() {
             return "DB2@" + this.hashCode() + ": {Left port:" + this.left + " Right port:" + this.right + "}\n >> " + this.invert.toString();
@@ -338,6 +343,9 @@ public class Types {
             this.front_right.setInverted(false);	// revert inversion in constructor
             this.back_right.setInverted(false);
             return Helper.getInverted(new MotorControllerGroup(this.front_right, this.back_right), this.invert.right);
+        }
+        public DriveMap_2<M> differentialDowncast() {
+            return new DriveMap_2<M>(this.front_left, this.front_right, super.p_front_left, super.p_front_right, super.invert);
         }
 
         public String toString() {
