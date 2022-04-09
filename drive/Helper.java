@@ -47,4 +47,46 @@ public class Helper {
 	}
 
 
+
+	// public static final class TankDriveValues {
+	// 	public final double
+	// 		left, right;
+
+	// 	public TankDriveValues(double l, double r) {
+	// 		this.left = l;
+	// 		this.right = r;
+	// 	}
+	// 	public static TankDriveValues turning(double v) {	// positive means right turn
+	// 		return new TankDriveValues(v, -v);
+	// 	}
+	// 	public static TankDriveValues forward(double v) {	// positive forward
+	// 		return new TankDriveValues(v, v);
+	// 	}
+	// }
+
+	// public static double proportionalTargetFollow1D(
+
+	// ) {
+	// 	return 0;
+	// }
+	// public static TankDriveValues proportionalTargetFollowPolar(
+	// 	double distance,
+	// 	double distance_target,
+	// 	double max_distance,
+	// 	double static_forward,
+	// 	double max_forward,
+	// 	double left_right,
+	// 	double offset_target,
+	// 	double max_offset,
+	// 	double static_turning,
+	// 	double max_turning
+	// ) {
+	// 	double f_err = distance - distance_target;
+	// 	double t_err = left_right - offset_target;
+
+
+	// 	return new TankDriveValues(0, 0);
+	// }
+
+
 }
