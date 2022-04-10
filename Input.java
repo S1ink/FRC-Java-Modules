@@ -1,4 +1,4 @@
-package frc.robot.modules.common;
+package frc.robot.team3407;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -6,6 +6,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.*;
+import frc.robot.team3407.commandbased.ToggleTrigger;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.filter.SlewRateLimiter;

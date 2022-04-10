@@ -1,4 +1,4 @@
-package frc.robot.modules.common;
+package frc.robot.team3407.commandbased;
 
 public interface VerboseCommand {
 

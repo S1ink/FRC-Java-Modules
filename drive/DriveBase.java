@@ -1,15 +1,13 @@
-package frc.robot.modules.common.drive;
+package frc.robot.team3407.drive;
 
-//import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj2.command.*;
+import frc.robot.team3407.Input.*;
+import frc.robot.team3407.drive.Types.*;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import edu.wpi.first.wpilibj.drive.*;
-// make swerve drive if that is ever relevant
-import edu.wpi.first.math.filter.SlewRateLimiter;
-
-import frc.robot.modules.common.Input;
-import frc.robot.modules.common.Input.*;
-import frc.robot.modules.common.drive.Types.*;
 
 
 public class DriveBase extends SubsystemBase {
@@ -262,69 +260,43 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
-	// public static abstract class RateLimitedAutoDrive extends DriveCommandBase {
-
-	// 	protected final SlewRateLimiter t_limit, d_limit;
-
-	// 	protected RateLimitedAutoDrive(DriveBase db) {
-	// 		super(db);
-	// 		this.t_limit = new SlewRateLimiter(Double.MAX_VALUE);
-	// 		this.d_limit = new SlewRateLimiter(Double.MAX_VALUE);
-	// 	}
-	// 	protected RateLimitedAutoDrive(DriveBase db, double rlimit) {
-	// 		super(db);
-	// 		this.t_limit = new SlewRateLimiter(rlimit);
-	// 		this.d_limit = new SlewRateLimiter(rlimit);
-	// 	}
-
-	// 	@Override protected void autoTurn(double v) {
-	// 		super.drivebase.drive.autoTurn(this.t_limit.calculate(v));
-	// 	}
-	// 	@Override protected void autoDrive(double l, double r) {
-	// 		double p = this.d_limit.calculate(Math.max(Math.abs(l), Math.abs(r)));
-	// 		p /= Math.max(Math.abs(l), Math.abs(r));		// find proportion between input and output or max input
-	// 		l *= p;		// scale each input by ^ so that the ratio remains constant between left and right
-	// 		r *= p;		// ^^
-	// 		super.drivebase.drive.autoDrive(l, r);
-	// 	}
 
 
-	// }
 
 	public TankDrive tankDrive() { return this.tank_command; }
-	public TankDrive tankDrive(Input.AnalogSupplier l, Input.AnalogSupplier r) { 
+	public TankDrive tankDrive(DoubleSupplier l, DoubleSupplier r) { 
 		this.tank_command = new TankDrive(this, l, r);
 		return this.tank_command; 
 	}
 	public ArcadeDrive arcadeDrive() { return this.arcade_command; }
-	public ArcadeDrive arcadeDrive(Input.AnalogSupplier s, Input.AnalogSupplier rot) { 
+	public ArcadeDrive arcadeDrive(DoubleSupplier s, DoubleSupplier rot) { 
 		this.arcade_command =  new ArcadeDrive(this, s, rot); 
 		return this.arcade_command;
 	}
 	public RaceDrive raceDrive() { return this.race_command; }
-	public RaceDrive raceDrive(Input.AnalogSupplier f, Input.AnalogSupplier b, Input.AnalogSupplier rot) { 
+	public RaceDrive raceDrive(DoubleSupplier f, DoubleSupplier b, DoubleSupplier rot) { 
 		this.race_command = new RaceDrive(this, f, b, rot); 
 		return this.race_command;
 	}
 	public CurvatureDrive curvatureDrive() { return this.curvature_command; }
-	public CurvatureDrive curvatureDrive(Input.AnalogSupplier s, Input.AnalogSupplier rot, Input.DigitalSupplier qs) { 
+	public CurvatureDrive curvatureDrive(DoubleSupplier s, DoubleSupplier rot, BooleanSupplier qs) { 
 		this.curvature_command = new CurvatureDrive(this, s, rot, qs); 
 		return this.curvature_command;
 	}
 	public TopDownDrive topDownDrive() { return this.topdown_command; }
-	public TopDownDrive topDownDrive(Input.AnalogSupplier x, Input.AnalogSupplier y, Input.AnalogSupplier rot) { 
+	public TopDownDrive topDownDrive(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) { 
 		this.topdown_command = new TopDownDrive(this, x, y, rot); 
 		return this.topdown_command;
 	}
 	public ModeDrive modeDrive() { return this.modedrive_command; } 
-	public ModeDrive modeDrive(AnalogSupplier x, AnalogSupplier y, DigitalSupplier inc, DigitalSupplier dec) {
+	public ModeDrive modeDrive(AnalogSupplier x, AnalogSupplier y, BooleanSupplier inc, BooleanSupplier dec) {
 		this.modedrive_command = new ModeDrive(this, x, y, inc, dec);
 		return this.modedrive_command;
 	}
 	public ModeDrive modeDrive(
 		AnalogSupplier lx, AnalogSupplier ly,
 		AnalogSupplier rx, AnalogSupplier ry,
-		DigitalSupplier inc, DigitalSupplier dec
+		BooleanSupplier inc, BooleanSupplier dec
 	) {
 		this.modedrive_command = new ModeDrive(this, lx, ly, rx, ry, inc, dec);
 		return this.modedrive_command;
@@ -332,7 +304,7 @@ public class DriveBase extends SubsystemBase {
 	public ModeDrive modeDrive(
 		AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier lt,
 		AnalogSupplier rx, AnalogSupplier ry, AnalogSupplier rt,
-		DigitalSupplier inc, DigitalSupplier dec
+		BooleanSupplier inc, BooleanSupplier dec
 	) {
 		this.modedrive_command = new ModeDrive(this, lx, ly, lt, rx, ry, rt, inc, dec);
 		return this.modedrive_command;
@@ -346,9 +318,9 @@ public class DriveBase extends SubsystemBase {
 
 	public static class TankDrive extends DriveCommandBase {
 		
-		private final Input.AnalogSupplier left, right;
+		private final DoubleSupplier left, right;
 
-		public TankDrive(DriveBase db, Input.AnalogSupplier l, Input.AnalogSupplier r) {
+		public TankDrive(DriveBase db, DoubleSupplier l, DoubleSupplier r) {
 			super(db);
 			this.left = l;
 			this.right = r;
@@ -361,7 +333,7 @@ public class DriveBase extends SubsystemBase {
 			}
 		}
 		@Override public void execute() {
-			this.drivebase.drive.tankDrive(this.left.get() * -1, this.right.get() * -1);
+			this.drivebase.drive.tankDrive(this.left.getAsDouble() * -1, this.right.getAsDouble() * -1);
 		}
 		@Override public boolean isFinished() { return false; }
 
@@ -369,9 +341,9 @@ public class DriveBase extends SubsystemBase {
 	}
 	public static class ArcadeDrive extends DriveCommandBase {
 		
-		private final Input.AnalogSupplier speed, rotation;
+		private final DoubleSupplier speed, rotation;
 
-		public ArcadeDrive(DriveBase db, Input.AnalogSupplier s, Input.AnalogSupplier rot) {
+		public ArcadeDrive(DriveBase db, DoubleSupplier s, DoubleSupplier rot) {
 			super(db);
 			this.speed = s;
 			this.rotation = rot;
@@ -384,7 +356,7 @@ public class DriveBase extends SubsystemBase {
 			}
 		}
 		@Override public void execute() {
-			this.drivebase.drive.arcadeDrive(this.speed.get(), this.rotation.get());
+			this.drivebase.drive.arcadeDrive(this.speed.getAsDouble(), this.rotation.getAsDouble());
 		}
 		@Override public boolean isFinished() { return false; }
 
@@ -392,9 +364,9 @@ public class DriveBase extends SubsystemBase {
 	}
 	public static class RaceDrive extends DriveCommandBase {
 		
-		private final Input.AnalogSupplier forward, backward, rotation;
+		private final DoubleSupplier forward, backward, rotation;
 
-		public RaceDrive(DriveBase db, Input.AnalogSupplier f, Input.AnalogSupplier b, Input.AnalogSupplier rot) {
+		public RaceDrive(DriveBase db, DoubleSupplier f, DoubleSupplier b, DoubleSupplier rot) {
 			super(db);
 			this.forward = f;
 			this.backward = b;
@@ -408,7 +380,7 @@ public class DriveBase extends SubsystemBase {
 			}
 		}
 		@Override public void execute() {
-			this.drivebase.drive.raceDrive(this.forward.get(), this.backward.get(), this.rotation.get());
+			this.drivebase.drive.raceDrive(this.forward.getAsDouble(), this.backward.getAsDouble(), this.rotation.getAsDouble());
 		}
 		@Override public boolean isFinished() { return false; }
 
@@ -416,10 +388,10 @@ public class DriveBase extends SubsystemBase {
 	}
 	public static class CurvatureDrive extends DriveCommandBase {
 		
-		private final Input.AnalogSupplier speed, rotation;
-		private final Input.DigitalSupplier qstop;
+		private final DoubleSupplier speed, rotation;
+		private final BooleanSupplier qstop;
 
-		public CurvatureDrive(DriveBase db, Input.AnalogSupplier s, Input.AnalogSupplier rot, Input.DigitalSupplier qs) {
+		public CurvatureDrive(DriveBase db, DoubleSupplier s, DoubleSupplier rot, BooleanSupplier qs) {
 			super(db);
 			this.speed = s;
 			this.rotation = rot;
@@ -433,7 +405,7 @@ public class DriveBase extends SubsystemBase {
 			}
 		}
 		@Override public void execute() {
-			this.drivebase.drive.curvatureDrive(this.speed.get(), this.rotation.get(), this.qstop.get());
+			this.drivebase.drive.curvatureDrive(this.speed.getAsDouble(), this.rotation.getAsDouble(), this.qstop.getAsBoolean());
 		}
 		@Override public boolean isFinished() { return false; }
 
@@ -441,9 +413,9 @@ public class DriveBase extends SubsystemBase {
 	}
 	public static class TopDownDrive extends DriveCommandBase {
 		
-		private final Input.AnalogSupplier xspeed, yspeed, rotation;
+		private final DoubleSupplier xspeed, yspeed, rotation;
 
-		public TopDownDrive(DriveBase db, Input.AnalogSupplier x, Input.AnalogSupplier y, Input.AnalogSupplier rot) {
+		public TopDownDrive(DriveBase db, DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
 			super(db);
 			this.xspeed = x;
 			this.yspeed = y;
@@ -457,7 +429,7 @@ public class DriveBase extends SubsystemBase {
 			}
 		}
 		@Override public void execute() {
-			this.drivebase.drive.topDownDrive(this.xspeed.get(), this.yspeed.get(), this.rotation.get());
+			this.drivebase.drive.topDownDrive(this.xspeed.getAsDouble(), this.yspeed.getAsDouble(), this.rotation.getAsDouble());
 		}
 		@Override public boolean isFinished() { return false; }
 
@@ -466,22 +438,18 @@ public class DriveBase extends SubsystemBase {
 
 	public static class ModeDrive extends DriveCommandBase {
 
-		private final AnalogSupplier 
-			left_x,
-			left_y,
-			left_t,
-			right_x,
-			right_y,
-			right_t;
-		public final DigitalSupplier
+		private final DoubleSupplier 
+			left_x, left_y, left_t,
+			right_x, right_y, right_t;
+		public final BooleanSupplier
 			increment,
 			decrement;
 		private final DriveModes mode;
 
 		public ModeDrive(	// single stick
 			DriveBase db,
-			AnalogSupplier x, AnalogSupplier y,
-			DigitalSupplier inc, DigitalSupplier dec
+			DoubleSupplier x, DoubleSupplier y,
+			BooleanSupplier inc, BooleanSupplier dec
 		) {
 			super(db);
 			this.left_x = ()->0.0;
@@ -501,8 +469,8 @@ public class DriveBase extends SubsystemBase {
 		}
 		public ModeDrive(	// dual stick
 			DriveBase db,
-			AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier rx, AnalogSupplier ry,
-			DigitalSupplier inc, DigitalSupplier dec
+			DoubleSupplier lx, DoubleSupplier ly, DoubleSupplier rx, DoubleSupplier ry,
+			BooleanSupplier inc, BooleanSupplier dec
 		) {
 			super(db);
 			this.left_x = lx;
@@ -522,9 +490,9 @@ public class DriveBase extends SubsystemBase {
 		}
 		public ModeDrive(	// 2 sticks, 2 triggers
 			DriveBase db,
-			AnalogSupplier lx, AnalogSupplier ly, AnalogSupplier lt,
-			AnalogSupplier rx, AnalogSupplier ry, AnalogSupplier rt,
-			DigitalSupplier inc, DigitalSupplier dec
+			DoubleSupplier lx, DoubleSupplier ly, DoubleSupplier lt,
+			DoubleSupplier rx, DoubleSupplier ry, DoubleSupplier rt,
+			BooleanSupplier inc, BooleanSupplier dec
 		) {
 			super(db);
 			this.left_x = lx;
@@ -540,41 +508,89 @@ public class DriveBase extends SubsystemBase {
 			);
 		}
 
+		public void setDriveOptions(DriveMode[] o) {
+			this.mode.setOptions(DriveModes.filter(this.mode.getOptions(), o));
+		}
+
 		@Override public void initialize() {
 			System.out.println("ModeDrive: Running...");
 		}
 		@Override public void execute() {
-			if(this.increment.get()) {
+			if(this.increment.getAsBoolean() && this.decrement.getAsBoolean()) {
+				this.mode.incrementWrap();
+				System.out.println("Mode wrap-incremented: " + this.mode.get().name());
+			} else if(this.increment.getAsBoolean()) {
 				this.mode.increment();
 				System.out.println("Mode incremented: " + this.mode.get().name());
-			}
-			if(this.decrement.get()) {
+			} else if(this.decrement.getAsBoolean()) {
 				this.mode.decrement();
 				System.out.println("Mode decremented: " + this.mode.get().name());
 			}
 			switch(this.mode.get()) {
 				case TANK:
-					super.tankDrive(this.left_y.get(), this.right_y.get());
+					super.tankDrive(this.left_y.getAsDouble(), this.right_y.getAsDouble());
 					break;
 				case ARCADE:
-					super.arcadeDrive(this.right_y.get(), this.right_x.get()*-1);	// for some reason the steering is inverted
+					super.arcadeDrive(this.right_y.getAsDouble(), this.right_x.getAsDouble()*-1);	// for some reason the steering is inverted
 					break;
 				case RACE:
-					super.raceDrive(this.right_t.get(), this.left_t.get(), this.right_x.get()*-1);
+					super.raceDrive(this.right_t.getAsDouble(), this.left_t.getAsDouble(), this.right_x.getAsDouble()*-1);
 					break;
 				case CURVATURE:
-					super.curvatureDrive(this.right_y.get(), this.right_x.get()*-1, this.right_t.get() >= 0.5);
+					super.curvatureDrive(this.right_y.getAsDouble(), this.right_x.getAsDouble()*-1, this.right_t.getAsDouble() >= 0.5);
 					break;
 				case TOP:
-					super.topDownDrive(this.left_x.get(), this.left_y.get(), this.right_x.get());
+					super.topDownDrive(this.left_x.getAsDouble(), this.left_y.getAsDouble(), this.right_x.getAsDouble());
 					break;
 				default:
-					super.arcadeDrive(this.right_y.get(), this.right_x.get());	// default because it should always be supported (single stick prereq)
+					super.arcadeDrive(this.right_y.getAsDouble(), this.right_x.getAsDouble());	// default because it should always be supported (single stick prereq)
 			}
 		}
 		@Override public boolean isFinished() { return false; }
 
 
+	}
+
+	public static class BasicDriveControl extends DriveBase.DriveCommandBase {
+	
+		private final double left, right;
+	
+		public BasicDriveControl(DriveBase db, double l, double r) {
+			super(db);
+			this.left = l;
+			this.right = r;
+		}
+	
+		@Override public void initialize() {
+			System.out.println("BasicDrive: Running...");
+		}
+		@Override public void execute() {
+			super.autoDrive(this.left, this.right);
+		}
+		@Override public void end(boolean i) {
+			System.out.println("BasicDrive: " + (i ? "Terminated." : "Completed."));
+		}
+		@Override public boolean isFinished() { return false; }
+	
+	
+		public static class Voltage extends BasicDriveControl {
+	
+			public Voltage(DriveBase db, double lv, double rv) { super(db, lv, rv); }
+	
+			@Override public void initialize() {
+				System.out.println("BasicVoltageDrive: Running...");
+			}
+			@Override public void execute() {
+				super.autoDriveVoltage(super.left, super.right);
+			}
+			@Override public void end(boolean i) {
+				System.out.println("BasicVoltageDrive: " + (i ? "Terminated." : "Completed."));
+			}
+	
+	
+		}
+	
+	
 	}
 
 	private static class Decelerate extends DriveCommandBase {
@@ -604,6 +620,7 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
+
 	private static class Idle extends DriveCommandBase {
 		
 		public Idle(DriveBase db) {

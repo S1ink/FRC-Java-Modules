@@ -1,11 +1,10 @@
-package frc.robot.modules.common.drive;
+package frc.robot.team3407.drive;
 
-import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.*;
-import frc.robot.modules.common.drive.Motors.MotorSupplier;
+import frc.robot.team3407.drive.Motors.MotorSupplier;
 
 
-public class Types {
+public final class Types {
 
 	public static enum DriveLayout {
         DIFFERENTIAL	(new DriveMode[]{DriveMode.TANK, DriveMode.ARCADE, DriveMode.RACE, DriveMode.CURVATURE}),
@@ -141,6 +140,13 @@ public class Types {
             }
             return this.modes[this.index];
         }
+        public synchronized DriveMode incrementWrap() {
+            this.index++;
+            if(this.index > this.modes.length) {
+                this.index = 0;
+            }
+            return this.modes[this.index];
+        }
         public DriveMode increment(int v) {
             if (this.index + v < this.modes.length) {
                 this.index += v;
@@ -150,6 +156,13 @@ public class Types {
         public DriveMode decrement() {
             if (this.index > 0) {
                 this.index--;
+            }
+            return this.modes[this.index];
+        }
+        public synchronized DriveMode decrementWrap() {
+            this.index--;
+            if(this.index < 0) {
+                this.index = this.modes.length - 1;
             }
             return this.modes[this.index];
         }
@@ -179,6 +192,7 @@ public class Types {
             return ret;
         }
 
+
     }
 	
     public static enum Deceleration {
@@ -198,7 +212,8 @@ public class Types {
         public final DriveLayout layout = DriveLayout.DIFFERENTIAL;
         public final int 
             p_left,
-            p_right;
+            p_right
+		;
         public final Inversions
             invert;
         
@@ -212,6 +227,8 @@ public class Types {
 			this.p_right = r;
 			this.invert = i;
 		}
+
+
     }
     public static final class DriveMap_2<M extends MotorController> extends DrivePortMap_2 {     // a drivebase map containing two sides, each with one motor port
 
@@ -238,7 +255,8 @@ public class Types {
         public String toString() {
             return "DB2@" + this.hashCode() + ": {Left port:" + this.left + " Right port:" + this.right + "}\n >> " + this.invert.toString();
         }
-		
+
+
     }
 
 	public static class DrivePortMap_3 {
@@ -248,7 +266,8 @@ public class Types {
 		public final int
             p_left,
             p_mid,
-            p_right;
+            p_right
+		;
 
 		public DrivePortMap_3(int l, int m, int r) {
 			this.p_left = l;
@@ -270,6 +289,7 @@ public class Types {
 			this.right = t.create(r);
 		}
 
+
     }
 
     public static class DrivePortMap_4 {
@@ -280,7 +300,8 @@ public class Types {
             p_front_left,
             p_front_right,
             p_back_left,
-            p_back_right;
+            p_back_right
+		;
         public final Inversions
             invert;
 
@@ -308,6 +329,7 @@ public class Types {
 			this.layout = supported[0];
         }
 
+
     }
     public static final class DriveMap_4<M extends MotorController> extends DrivePortMap_4 {     // a drivebase map containing two sides, each with two motor ports
         
@@ -315,7 +337,8 @@ public class Types {
             front_left,
             front_right,
             back_left,
-            back_right;
+            back_right
+		;
 
         public DriveMap_4(int fl, int fr, int bl, int br, MotorSupplier<M> t) {
 			this(fl, fr, bl, br, t, Inversions.NEITHER, supported[0]);
@@ -353,7 +376,71 @@ public class Types {
                 " BL:" + this.back_left + " BR:" + this.back_right + "}\n >> " + this.invert.toString();
         }
 
+
     }
+
+	public static class DrivePortMap_8 {
+
+		public static final DriveLayout layout = DriveLayout.SWERVE;
+		public final int
+			p_front_left_1,
+			p_front_left_2,
+			p_front_right_1,
+			p_front_right_2,
+			p_back_left_1,
+			p_back_left_2,
+			p_back_right_1,
+			p_back_right_2
+		;
+
+		public DrivePortMap_8(int start) {
+			this(start, start + 1, start + 2, start + 3, start + 4, start + 5, start + 6, start + 7);
+		}
+		public DrivePortMap_8(
+			int fl1, int fl2, int fr1, int fr2, int bl1, int bl2, int br1, int br2
+		) {
+			this.p_front_left_1 = fl1;
+			this.p_front_left_2 = fl2;
+			this.p_front_right_1 = fr1;
+			this.p_front_right_2 = fr2;
+			this.p_back_left_1 = bl1;
+			this.p_back_left_2 = bl2;
+			this.p_back_right_1 = br1;
+			this.p_back_right_2 = br2;
+		}
+
+
+	}
+	public static final class DriveMap_8<M extends MotorController> extends DrivePortMap_8 {
+
+		public final M
+			front_left_1,
+			front_left_2,
+			front_right_1,
+			front_right_2,
+			back_left_1,
+			back_left_2,
+			back_right_1,
+			back_right_2
+		;
+
+		public DriveMap_8(int start, MotorSupplier<M> t) {
+			this(start, start + 1, start + 2, start + 3, start + 4, start + 5, start + 6, start + 7, t);
+		}
+		public DriveMap_8(int fl1, int fl2, int fr1, int fr2, int bl1, int bl2, int br1, int br2, MotorSupplier<M> t) {
+			super(fl1, fl2, fr1, fr2, bl1, bl2, br1, br2);
+			this.front_left_1 = t.create(super.p_front_left_1);
+			this.front_left_2 = t.create(super.p_front_left_2);
+			this.front_right_1 = t.create(super.p_front_right_1);
+			this.front_right_2 = t.create(super.p_front_right_2);
+			this.back_left_1 = t.create(super.p_back_left_1);
+			this.back_left_2 = t.create(super.p_back_left_2);
+			this.back_right_1 = t.create(super.p_back_right_1);
+			this.back_right_2 = t.create(super.p_back_right_2);
+		}
+
+
+	}
 
 
 }
