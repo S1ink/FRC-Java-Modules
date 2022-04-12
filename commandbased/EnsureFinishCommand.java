@@ -3,6 +3,10 @@ package frc.robot.team3407.commandbased;
 import edu.wpi.first.wpilibj2.command.*;
 
 
+/**
+ * Requires the passed in command to "finish" the desired amound of times before this wrapper finishes. Helpful for vision commands
+ * where a short discontinuities can accidentally trigger an early end. 
+ */
 public class EnsureFinishCommand extends CommandBase {
 
 	private final Command c;

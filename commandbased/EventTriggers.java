@@ -4,6 +4,9 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.DriverStation;
 
 
+/**
+ * Triggers that become active during specific portions of a game. 
+ */
 public class EventTriggers {
 
 	public static class EnabledTrigger extends Trigger {

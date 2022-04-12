@@ -516,7 +516,7 @@ public class DriveBase extends SubsystemBase {
 			System.out.println("ModeDrive: Running...");
 		}
 		@Override public void execute() {
-			if(this.increment.getAsBoolean() && this.decrement.getAsBoolean()) {
+			if(this.increment.getAsBoolean() && (this.increment == this.decrement || this.decrement.getAsBoolean())) {
 				this.mode.incrementWrap();
 				System.out.println("Mode wrap-incremented: " + this.mode.get().name());
 			} else if(this.increment.getAsBoolean()) {

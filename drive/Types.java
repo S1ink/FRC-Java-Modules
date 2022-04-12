@@ -142,7 +142,7 @@ public final class Types {
         }
         public synchronized DriveMode incrementWrap() {
             this.index++;
-            if(this.index > this.modes.length) {
+            if(this.index >= this.modes.length) {
                 this.index = 0;
             }
             return this.modes[this.index];

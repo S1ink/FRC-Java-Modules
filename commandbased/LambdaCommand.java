@@ -4,7 +4,9 @@ import java.util.function.BooleanSupplier;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 
-// Runnable can already be passed into most commandscheduler methods, but this acts as a wrapper for use in creating command groups
+/**
+ * A wrapper for Runnables such that they can be used in command groups and other specific scenarios
+ */
 public class LambdaCommand extends CommandBase {
 
 	private final Runnable run;
