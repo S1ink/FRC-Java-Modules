@@ -1,1 +1,1 @@
-This repo contains multi-project compatible robot code that can be imported via git submodules
+This repo contains multi-project compatible robot code that can be imported via git submodules. All code is designed to be implemented in a WPILib project, so that could be considered a dependancy. 

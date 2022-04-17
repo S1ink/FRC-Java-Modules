@@ -13,19 +13,28 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import frc.robot.team3407.commandbased.ToggleTrigger;
 
 
+/**
+ * This class houses an advanced input framework that extends the general purpose WPILib input system. 
+ */
 public class Input {
 
+	/**
+	 * Interface for supplying joystick values (doubles)
+	 */
 	public static interface AnalogSupplier extends DoubleSupplier {
 		double get();
 		@Override default double getAsDouble() { return get(); }
 	}
+	/**
+	 * Interface for supplying button presses (booleans)
+	 */
 	public static interface DigitalSupplier extends BooleanSupplier {
 		boolean get();
 		@Override default boolean getAsBoolean() { return get(); }
 	}
 
 	/**
-	 * AnalogSlewSupplier limits the rate output (between calls) to a maximum of that given in units/sec
+	 * AnalogSlewSupplier limits the rate of output change (between calls) to a maximum of that given in units/sec
 	 */
 	public static class AnalogSlewSupplier implements AnalogSupplier {
 
@@ -44,8 +53,32 @@ public class Input {
 
 
 	}
+	/**
+	 * AnalogExponential acts a passthrough for a base supplier, and returns each input taken to the given power
+	 */
+	public static class AnalogExponential implements AnalogSupplier{
+
+		private final AnalogSupplier source;
+		private final double power;
+
+		public AnalogExponential(AnalogSupplier src, double pow) {
+			this.source = src;
+			this.power = pow;
+		}
+
+		@Override public double get() {
+			double i = this.source.get();
+			return Math.copySign(Math.pow(Math.abs(i), this.power), i);
+		}
 
 
+	}
+
+
+	/**
+	 * InputDevice extends all {@link GenericHID} functionality, but adds some advanced trigger and POVButton mapping features.
+	 * It is also required for all Analog and Digital enum interfaces defined below. 
+	 */
 	public static class InputDevice extends GenericHID {
 
 		private PovButton[] buttons = null;
@@ -90,10 +123,15 @@ public class Input {
 			return new Trigger(()->{ return super.isConnected(); });
 		}
 
+
 	}
 
-	/** Converts any pov's on a controller into button values past those that would normally be assigned */
+	/**
+	 * PovButton remaps all pov's on a joystick to additional button indexes past those normally used. Functionality and use is
+	 * the same as a normal joystick button. 
+	 */
 	public static class PovButton extends Button {
+
 		public static final PovButton dummy = new PovButton();
 		private final int 
 			port, button;
@@ -180,8 +218,13 @@ public class Input {
 			if(this != PovButton.dummy) { super.cancelWhenActive(command); }
 			return this;
 		}
+
+
 	}
 
+	/**
+	 * AnalogMap defines all functions available to Analog enums (defined below)
+	 */
 	public static interface AnalogMap {
 		int getValue();
 		int getTotal();
@@ -223,7 +266,34 @@ public class Input {
 			}
 			return new AnalogSlewSupplier(()->0.0);
 		}
+		default AnalogExponential getExponentialSupplier(InputDevice i, double pow) {
+			if(this.compatible(i)) {
+				return new AnalogExponential(()->i.getRawAxis(this.getValue()), pow);
+			}
+			return new AnalogExponential(()->0.0, 1.0);
+		}
+		default AnalogExponential getExponentialSupplier(int p, double pow) {
+			if(this.compatible(p)) {
+				return new AnalogExponential(()->DriverStation.getStickAxis(p, this.getValue()), pow);
+			}
+			return new AnalogExponential(()->0.0, 1.0);
+		}
+		default AnalogSupplier getExponentialLimitedSupplier(InputDevice i, double mrate, double pow) {
+			if(this.compatible(i)) {
+				return new AnalogSlewSupplier(new AnalogExponential(()->i.getRawAxis(this.getValue()), pow), mrate);
+			}
+			return ()->0.0;
+		}
+		default AnalogSupplier getExponentialLimitedSupplier(int p, double mrate, double pow) {
+			if(this.compatible(p)) {
+				return new AnalogSlewSupplier(new AnalogExponential(()->DriverStation.getStickAxis(p, this.getValue()), pow), mrate);
+			}
+			return ()->0.0;
+		}
 	}
+	/**
+	 * DigitalMap defines all functions available to Digital enums defined below. Provides integration with PovButton when available. 
+	 */
 	public static interface DigitalMap {
 		int getValue();
 		int getTotal();
@@ -383,6 +453,9 @@ public class Input {
 	}
 
 
+	/**
+	 * All button and axis indexes for an Xbox controller
+	 */
 	public static class Xbox {
 		public static enum Analog implements AnalogMap {
 			LX(0), RX(4), LY(1), RY(5), LT(2), RT(3), 
@@ -408,6 +481,9 @@ public class Input {
 			public int getTotal() { return TOTAL.value; }
 		}
 	}
+	/**
+	 * All button and axis indexes for a Playstation controller
+	 */
 	public static class PlayStation {
 		public static enum Analog implements AnalogMap {
 			LX(0), LY(1), RX(2), RY(5), LT(3), RT(4),
@@ -433,6 +509,9 @@ public class Input {
 			public int getTotal() { return TOTAL.value; }
 		}
 	}
+	/**
+	 * All button and axis indexes for an Attack3 joystick
+	 */
 	public static class Attack3 {
 		public static enum Analog  implements AnalogMap {
 			X(0), Y(1), S(2),   // ~ X-Axis, Y-Axis, Slider thing on the bottom
@@ -456,6 +535,9 @@ public class Input {
 			public int getTotal() { return TOTAL.value; }
 		}
 	}
+	/**
+	 * All button and axis indexes for an Extreme3D joystick
+	 */
 	public static class Extreme3d {
 		public static enum Analog  implements AnalogMap {
 			X(0), Y(1), Z(2), S(3),     // x-axis, y-axis, swivell-axis, slider-axis
@@ -479,5 +561,6 @@ public class Input {
 			public int getTotal() { return TOTAL.value; }
 		}
 	}
+
 
 }

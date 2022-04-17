@@ -155,7 +155,7 @@ public class DriveBase extends SubsystemBase {
 
 	private final Drivable drive;
 	private final Idle idle_command;
-	private Decelerate decelerate_command;
+	private Decelerate decelerate_command = new Decelerate(this, Deceleration._98);
 	private TankDrive tank_command = new TankDrive(this, ()->0.0, ()->0.0);
 	private ArcadeDrive arcade_command = new ArcadeDrive(this, ()->0.0, ()->0.0);
 	private RaceDrive race_command = new RaceDrive(this, ()->0.0, ()->0.0, ()->0.0);
