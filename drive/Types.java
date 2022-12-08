@@ -266,38 +266,38 @@ public final class Types {
 
     }
 
-	public static class DrivePortMap_3 {
+	// public static class DrivePortMap_3 {
 
-		//public static final DriveLayout[] supported = {DriveLayout.KILLOUGH};
-		public final DriveLayout layout = DriveLayout.KILLOUGH;
-		public final int
-            p_left,
-            p_mid,
-            p_right
-		;
+	// 	//public static final DriveLayout[] supported = {DriveLayout.KILLOUGH};
+	// 	public final DriveLayout layout = DriveLayout.KILLOUGH;
+	// 	public final int
+    //         p_left,
+    //         p_mid,
+    //         p_right
+	// 	;
 
-		public DrivePortMap_3(int l, int m, int r) {
-			this.p_left = l;
-			this.p_mid = m;
-			this.p_right = r;
-		}
-	}
-    public static final class DriveMap_3<M extends MotorController> extends DrivePortMap_3 {
+	// 	public DrivePortMap_3(int l, int m, int r) {
+	// 		this.p_left = l;
+	// 		this.p_mid = m;
+	// 		this.p_right = r;
+	// 	}
+	// }
+    // public static final class DriveMap_3<M extends MotorController> extends DrivePortMap_3 {
 
-        public final M
-			left,
-			mid,
-			right;
+    //     public final M
+	// 		left,
+	// 		mid,
+	// 		right;
 		
-		public DriveMap_3(int l, int m, int r, MotorSupplier<M> t) {
-			super(l, m, r);
-			this.left = t.create(l);
-			this.mid = t.create(m);
-			this.right = t.create(r);
-		}
+	// 	public DriveMap_3(int l, int m, int r, MotorSupplier<M> t) {
+	// 		super(l, m, r);
+	// 		this.left = t.create(l);
+	// 		this.mid = t.create(m);
+	// 		this.right = t.create(r);
+	// 	}
 
 
-    }
+    // }
 
     public static class DrivePortMap_4 {
 

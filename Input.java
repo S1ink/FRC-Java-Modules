@@ -43,7 +43,7 @@ public class Input {
 
 		public AnalogSlewSupplier(AnalogSupplier src) { this(src, Double.MAX_VALUE); }  // kind of pointless?
 		public AnalogSlewSupplier(AnalogSupplier src, double mrate) {
-			this.limit = new SlewRateLimiter(mrate, src.get());
+			this.limit = new SlewRateLimiter(mrate, -mrate, src.get());
 			this.source = src;
 		}
 
@@ -56,7 +56,7 @@ public class Input {
 	/**
 	 * AnalogExponential acts a passthrough for a base supplier, and returns each input taken to the given power
 	 */
-	public static class AnalogExponential implements AnalogSupplier{
+	public static class AnalogExponential implements AnalogSupplier {
 
 		private final AnalogSupplier source;
 		private final double power;
@@ -127,24 +127,30 @@ public class Input {
 	}
 
 	/**
-	 * PovButton remaps all pov's on a joystick to additional button indexes past those normally used. Functionality and use is
+	 * PovButton remaps all pov's on a joystick to additional button indices past those normally used. Functionality and use is
 	 * the same as a normal joystick button. 
 	 */
-	public static class PovButton extends Button {
+	public static class PovButton implements DigitalSupplier {
 
 		public static final PovButton dummy = new PovButton();
+		public static final Trigger dumb_trigger = new Trigger(()->false);
+
+		// private final Trigger
+		// 	trigger;
 		private final int 
 			port, button;
 		private final boolean
 			use_pov;
 
 		private PovButton() {
-			this.port = DriverStation.kJoystickPorts-1;
+			// this.trigger = dumb_trigger;
+			this.port = DriverStation.kJoystickPorts - 1;
 			this.button = 0;
 			this.use_pov = false;
 		}
 		public PovButton(GenericHID device, int button) { this(device.getPort(), button); }
 		public PovButton(int port, int button) {
+			// this.trigger = new Trigger(this);
 			this.port = port;
 			int _bc = DriverStation.getStickButtonCount(this.port), _pc = DriverStation.getStickPOVCount(this.port);
 			this.use_pov = ((button > _bc) && (button <= _bc + (_pc * 4)));
@@ -154,70 +160,79 @@ public class Input {
 				this.button = button; 
 			}
 		}
-		@Override
-		public boolean get() {
+
+		@Override public boolean get() {
 			if (this.use_pov) {
-				return (DriverStation.getStickPOV(this.port, (this.button-1) / 4) / 90.0 + 1) == this.button;
+				return (DriverStation.getStickPOV(this.port, (this.button - 1) / 4) / 90.0 + 1) == this.button;
 			} else {
 				return DriverStation.getStickButton(this.port, this.button);
 			}
 		}
-		@Override public Button whenPressed(final Command command, boolean interruptible) {
-			if(this != PovButton.dummy) { super.whenActive(command, interruptible); }
-			return this;
+
+		public static class PovTriggerImpl extends Trigger {
+
+			public PovTriggerImpl(int port, int button) {
+				super(new PovButton(port, button));
+			}
+
 		}
-		@Override public Button whenPressed(final Command command) {
-			if(this != PovButton.dummy) { super.whenActive(command); }
-			return this;
-		}
-		@Override public Button whenPressed(final Runnable toRun, Subsystem... requirements) {
-			if(this != PovButton.dummy) { super.whenActive(toRun, requirements); }
-			return this;
-		}
-		@Override public Button whileHeld(final Command command, boolean interruptible) {
-			if(this != PovButton.dummy) { super.whileActiveContinuous(command, interruptible); }
-			return this;
-		}
-		@Override public Button whileHeld(final Command command) {
-			if(this != PovButton.dummy) { super.whileActiveContinuous(command); }
-			return this;
-		}
-		@Override public Button whileHeld(final Runnable toRun, Subsystem... requirements) {
-			if(this != PovButton.dummy) { super.whileActiveContinuous(toRun, requirements); }
-			return this;
-		}
-		@Override public Button whenHeld(final Command command, boolean interruptible) {
-			if(this != PovButton.dummy) { super.whileActiveOnce(command, interruptible); }
-			return this;
-		}
-		@Override public Button whenHeld(final Command command) {
-			if(this != PovButton.dummy) { super.whileActiveOnce(command, true); }
-			return this;
-		}
-		@Override public Button whenReleased(final Command command, boolean interruptible) {
-			if(this != PovButton.dummy) { super.whenInactive(command, interruptible); }
-			return this;
-		}
-		@Override public Button whenReleased(final Command command) {
-			if(this != PovButton.dummy) { super.whenInactive(command); }
-			return this;
-		}
-		@Override public Button whenReleased(final Runnable toRun, Subsystem... requirements) {
-			if(this != PovButton.dummy) { super.whenInactive(toRun, requirements); }
-			return this;
-		}
-		@Override public Button toggleWhenPressed(final Command command, boolean interruptible) {
-			if(this != PovButton.dummy) { super.toggleWhenActive(command, interruptible); }
-			return this;
-		}
-		@Override public Button toggleWhenPressed(final Command command) {
-			if(this != PovButton.dummy) { super.toggleWhenActive(command); }
-			return this;
-		}
-		@Override public Button cancelWhenPressed(final Command command) {
-			if(this != PovButton.dummy) { super.cancelWhenActive(command); }
-			return this;
-		}
+
+		// @Override public Trigger whenPressed(final Command command, boolean interruptible) {
+		// 	if(this != PovButton.dummy) { super.onTrue(command); }
+		// 	return this;
+		// }
+		// @Override public Button whenPressed(final Command command) {
+		// 	if(this != PovButton.dummy) { super.whenActive(command); }
+		// 	return this;
+		// }
+		// @Override public Button whenPressed(final Runnable toRun, Subsystem... requirements) {
+		// 	if(this != PovButton.dummy) { super.whenActive(toRun, requirements); }
+		// 	return this;
+		// }
+		// @Override public Button whileHeld(final Command command, boolean interruptible) {
+		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(command, interruptible); }
+		// 	return this;
+		// }
+		// @Override public Button whileHeld(final Command command) {
+		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(command); }
+		// 	return this;
+		// }
+		// @Override public Button whileHeld(final Runnable toRun, Subsystem... requirements) {
+		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(toRun, requirements); }
+		// 	return this;
+		// }
+		// @Override public Button whenHeld(final Command command, boolean interruptible) {
+		// 	if(this != PovButton.dummy) { super.whileActiveOnce(command, interruptible); }
+		// 	return this;
+		// }
+		// @Override public Button whenHeld(final Command command) {
+		// 	if(this != PovButton.dummy) { super.whileActiveOnce(command, true); }
+		// 	return this;
+		// }
+		// @Override public Button whenReleased(final Command command, boolean interruptible) {
+		// 	if(this != PovButton.dummy) { super.whenInactive(command, interruptible); }
+		// 	return this;
+		// }
+		// @Override public Button whenReleased(final Command command) {
+		// 	if(this != PovButton.dummy) { super.whenInactive(command); }
+		// 	return this;
+		// }
+		// @Override public Button whenReleased(final Runnable toRun, Subsystem... requirements) {
+		// 	if(this != PovButton.dummy) { super.whenInactive(toRun, requirements); }
+		// 	return this;
+		// }
+		// @Override public Button toggleWhenPressed(final Command command, boolean interruptible) {
+		// 	if(this != PovButton.dummy) { super.toggleWhenActive(command, interruptible); }
+		// 	return this;
+		// }
+		// @Override public Button toggleWhenPressed(final Command command) {
+		// 	if(this != PovButton.dummy) { super.toggleWhenActive(command); }
+		// 	return this;
+		// }
+		// @Override public Button cancelWhenPressed(final Command command) {
+		// 	if(this != PovButton.dummy) { super.cancelWhenActive(command); }
+		// 	return this;
+		// }
 
 
 	}
@@ -454,7 +469,7 @@ public class Input {
 
 
 	/**
-	 * All button and axis indexes for an Xbox controller
+	 * All button and axis indices for an Xbox controller
 	 */
 	public static class Xbox {
 		public static enum Analog implements AnalogMap {
@@ -482,7 +497,7 @@ public class Input {
 		}
 	}
 	/**
-	 * All button and axis indexes for a Playstation controller
+	 * All button and axis indices for a Playstation controller
 	 */
 	public static class PlayStation {
 		public static enum Analog implements AnalogMap {
@@ -510,7 +525,7 @@ public class Input {
 		}
 	}
 	/**
-	 * All button and axis indexes for an Attack3 joystick
+	 * All button and axis indices for an Attack3 joystick
 	 */
 	public static class Attack3 {
 		public static enum Analog  implements AnalogMap {
@@ -536,7 +551,7 @@ public class Input {
 		}
 	}
 	/**
-	 * All button and axis indexes for an Extreme3D joystick
+	 * All button and axis indices for an Extreme3D joystick
 	 */
 	public static class Extreme3d {
 		public static enum Analog  implements AnalogMap {

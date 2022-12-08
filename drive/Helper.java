@@ -24,14 +24,19 @@ public class Helper {
 			motors[i].set(motors[i].get() * constant.value);
 		}
 	}
-	public static void applyPercentage(MotorController[] motors, double p) {
+	public static void applyProportion(MotorController[] motors, double p) {
 		for(int i = 0; i < motors.length; i++) {
 			motors[i].set(motors[i].get() * p);
 		}
 	}
-	public static void applyAll(MotorController[] motors, double s) {
+	public static void applyPercentage(MotorController[] motors, double s) {
 		for(int i = 0; i < motors.length; i++) {
 			motors[i].set(s);
+		}
+	}
+	public static void applyVoltage(MotorController[] motors, double v) {
+		for(int i = 0; i < motors.length; i++) {
+			motors[i].setVoltage(v);
 		}
 	}
 	public static void applyStop(MotorController m, MotorController... ms) {

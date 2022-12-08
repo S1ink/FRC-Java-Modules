@@ -4,10 +4,11 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.*;
-import frc.robot.team3407.Input.*;
-import frc.robot.team3407.drive.Types.*;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import edu.wpi.first.wpilibj.drive.*;
+
+import frc.robot.team3407.Input.*;
+import frc.robot.team3407.drive.Types.*;
 
 
 public class DriveBase extends SubsystemBase {
@@ -111,46 +112,46 @@ public class DriveBase extends SubsystemBase {
 
 
 	}
-	private class KilloughBase implements Drivable {
+	// private class KilloughBase implements Drivable {
 
-		private final MotorController[] motors = new MotorController[3];
-		private final KilloughDrive drive;
+	// 	private final MotorController[] motors = new MotorController[3];
+	// 	private final KilloughDrive drive;
 
-		public<M extends MotorController> KilloughBase(DriveMap_3<M> map) {
-			this.motors[0] = map.left;
-			this.motors[1] = map.right;
-			this.motors[2] = map.mid;
-			this.drive = new KilloughDrive(this.motors[0], this.motors[1], this.motors[2]);
-		}
+	// 	public<M extends MotorController> KilloughBase(DriveMap_3<M> map) {
+	// 		this.motors[0] = map.left;
+	// 		this.motors[1] = map.right;
+	// 		this.motors[2] = map.mid;
+	// 		this.drive = new KilloughDrive(this.motors[0], this.motors[1], this.motors[2]);
+	// 	}
 
-		@Override public DriveLayout getLayout() { return DriveLayout.KILLOUGH; }
-		@Override public MotorController[] getMotors() { return this.motors; }
+	// 	@Override public DriveLayout getLayout() { return DriveLayout.KILLOUGH; }
+	// 	@Override public MotorController[] getMotors() { return this.motors; }
 
-		@Override public void tankDrive(double l, double r) { System.out.println("KilloughBase: tankDrive() is not supported"); }
-		@Override public void arcadeDrive(double s, double rot) { this.drive.driveCartesian(s, 0, rot); }
-		@Override public void raceDrive(double f, double b, double rot) { this.drive.driveCartesian(f-b, 0, rot); }
-		@Override public void curvatureDrive(double s, double rot, boolean q) { System.out.println("KilloughBase: curvatureDrive() is not implemented yet"); }
-		@Override public void topDownDrive(double x,  double y, double rot) { this.drive.driveCartesian(y, x, rot); }
+	// 	@Override public void tankDrive(double l, double r) { System.out.println("KilloughBase: tankDrive() is not supported"); }
+	// 	@Override public void arcadeDrive(double s, double rot) { this.drive.driveCartesian(s, 0, rot); }
+	// 	@Override public void raceDrive(double f, double b, double rot) { this.drive.driveCartesian(f-b, 0, rot); }
+	// 	@Override public void curvatureDrive(double s, double rot, boolean q) { System.out.println("KilloughBase: curvatureDrive() is not implemented yet"); }
+	// 	@Override public void topDownDrive(double x,  double y, double rot) { this.drive.driveCartesian(y, x, rot); }
 
-		@Override public void autoTurn(double v) {
-			Helper.applyAll(this.motors, v);
-			this.drive.feed();
-		}
-		@Override public void autoDrive(double l, double r) {
+	// 	@Override public void autoTurn(double v) {
+	// 		Helper.applyAll(this.motors, v);
+	// 		this.drive.feed();
+	// 	}
+	// 	@Override public void autoDrive(double l, double r) {
 
-			this.drive.feed();
-		}
-		@Override public void autoDriveVoltage(double lv, double rv) {
+	// 		this.drive.feed();
+	// 	}
+	// 	@Override public void autoDriveVoltage(double lv, double rv) {
 
-			this.drive.feed();
-		}
+	// 		this.drive.feed();
+	// 	}
 
-		@Override public void feed() { this.drive.feed(); }
-		@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
-		@Override public void setDeadband(double d) { this.drive.setDeadband(d); }
+	// 	@Override public void feed() { this.drive.feed(); }
+	// 	@Override public void setScaling(double s) { this.drive.setMaxOutput(s); }
+	// 	@Override public void setDeadband(double d) { this.drive.setDeadband(d); }
 
 
-	}
+	// }
 
 
 	private final Drivable drive;
@@ -169,12 +170,12 @@ public class DriveBase extends SubsystemBase {
 		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
 		super.setDefaultCommand(this.idle_command);
 	}
-	public<M extends MotorController> DriveBase(DriveMap_3<M> map) {
-		this.drive = new KilloughBase(map);
-		this.idle_command = new Idle(this);
-		this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
-		super.setDefaultCommand(this.idle_command);
-	}
+	// public<M extends MotorController> DriveBase(DriveMap_3<M> map) {
+	// 	this.drive = new KilloughBase(map);
+	// 	this.idle_command = new Idle(this);
+	// 	this.modedrive_command = new ModeDrive(this, ()->0.0, ()->0.0, ()->false, ()->false);
+	// 	super.setDefaultCommand(this.idle_command);
+	// }
 	public<M extends MotorController> DriveBase(DriveMap_4<M> map) {
 		this.idle_command = new Idle(this);
 		super.setDefaultCommand(this.idle_command);
@@ -250,7 +251,7 @@ public class DriveBase extends SubsystemBase {
 		protected void autoDriveVoltage(double lv, double rv) { this.drivebase.drive.autoDriveVoltage(lv, rv); }
 
 		protected void fromLast(double p) { 
-			Helper.applyPercentage(this.drivebase.drive.getMotors(), p); 
+			Helper.applyProportion(this.drivebase.drive.getMotors(), p); 
 			this.drivebase.drive.feed();
 		}
 
