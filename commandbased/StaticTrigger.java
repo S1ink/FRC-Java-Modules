@@ -18,9 +18,9 @@ public class StaticTrigger extends Trigger {
 	public void disable() { this.state = false; }
 	public void setState(boolean val) { this.state = val; }
 
-	@Override public boolean get() {
-		return this.state;
-	}
+	// @Override public boolean get() {
+	// 	return this.state;
+	// }
 
 
 }

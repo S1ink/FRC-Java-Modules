@@ -109,7 +109,7 @@ public class Input {
 			}
 		}
 
-		public PovButton getCallback(int button) {  // returns dummy if joystick not connected
+		public PovButton getTrigger(int button) {  // returns dummy if joystick not connected
 			if(this.verifyInfo()) {
 				if(this.buttons[button-1] == null) {
 					this.buttons[button-1] = new PovButton(this, button);
@@ -130,109 +130,43 @@ public class Input {
 	 * PovButton remaps all pov's on a joystick to additional button indices past those normally used. Functionality and use is
 	 * the same as a normal joystick button. 
 	 */
-	public static class PovButton implements DigitalSupplier {
+	public static class PovButton extends Trigger implements DigitalSupplier {
+
+		public static class Supplier implements DigitalSupplier {
+			private final int port, button;
+			private final boolean use_pov;
+			public Supplier(int port, int button) {
+				this.port = port;
+				int _bc = DriverStation.getStickButtonCount(this.port), _pc = DriverStation.getStickPOVCount(this.port);
+				this.use_pov = ((button > _bc) && (button <= _bc + (_pc * 4)));
+				if (this.use_pov) { 
+					this.button = button - _bc;
+				} else { 
+					this.button = button;
+				}
+			}
+			@Override public boolean get() {
+				if (this.use_pov) {
+					return (DriverStation.getStickPOV(this.port, (this.button - 1) / 4) / 90.0 + 1) == this.button;
+				} else {
+					return DriverStation.getStickButton(this.port, this.button);
+				}
+			}
+		}
 
 		public static final PovButton dummy = new PovButton();
-		public static final Trigger dumb_trigger = new Trigger(()->false);
-
-		// private final Trigger
-		// 	trigger;
-		private final int 
-			port, button;
-		private final boolean
-			use_pov;
 
 		private PovButton() {
-			// this.trigger = dumb_trigger;
-			this.port = DriverStation.kJoystickPorts - 1;
-			this.button = 0;
-			this.use_pov = false;
+			super(()->false);
 		}
 		public PovButton(GenericHID device, int button) { this(device.getPort(), button); }
 		public PovButton(int port, int button) {
-			// this.trigger = new Trigger(this);
-			this.port = port;
-			int _bc = DriverStation.getStickButtonCount(this.port), _pc = DriverStation.getStickPOVCount(this.port);
-			this.use_pov = ((button > _bc) && (button <= _bc + (_pc * 4)));
-			if (this.use_pov) { 
-				this.button = button - _bc; 
-			} else { 
-				this.button = button; 
-			}
+			super(new PovButton.Supplier(port, button));
 		}
 
 		@Override public boolean get() {
-			if (this.use_pov) {
-				return (DriverStation.getStickPOV(this.port, (this.button - 1) / 4) / 90.0 + 1) == this.button;
-			} else {
-				return DriverStation.getStickButton(this.port, this.button);
-			}
+			return super.getAsBoolean();
 		}
-
-		public static class PovTriggerImpl extends Trigger {
-
-			public PovTriggerImpl(int port, int button) {
-				super(new PovButton(port, button));
-			}
-
-		}
-
-		// @Override public Trigger whenPressed(final Command command, boolean interruptible) {
-		// 	if(this != PovButton.dummy) { super.onTrue(command); }
-		// 	return this;
-		// }
-		// @Override public Button whenPressed(final Command command) {
-		// 	if(this != PovButton.dummy) { super.whenActive(command); }
-		// 	return this;
-		// }
-		// @Override public Button whenPressed(final Runnable toRun, Subsystem... requirements) {
-		// 	if(this != PovButton.dummy) { super.whenActive(toRun, requirements); }
-		// 	return this;
-		// }
-		// @Override public Button whileHeld(final Command command, boolean interruptible) {
-		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(command, interruptible); }
-		// 	return this;
-		// }
-		// @Override public Button whileHeld(final Command command) {
-		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(command); }
-		// 	return this;
-		// }
-		// @Override public Button whileHeld(final Runnable toRun, Subsystem... requirements) {
-		// 	if(this != PovButton.dummy) { super.whileActiveContinuous(toRun, requirements); }
-		// 	return this;
-		// }
-		// @Override public Button whenHeld(final Command command, boolean interruptible) {
-		// 	if(this != PovButton.dummy) { super.whileActiveOnce(command, interruptible); }
-		// 	return this;
-		// }
-		// @Override public Button whenHeld(final Command command) {
-		// 	if(this != PovButton.dummy) { super.whileActiveOnce(command, true); }
-		// 	return this;
-		// }
-		// @Override public Button whenReleased(final Command command, boolean interruptible) {
-		// 	if(this != PovButton.dummy) { super.whenInactive(command, interruptible); }
-		// 	return this;
-		// }
-		// @Override public Button whenReleased(final Command command) {
-		// 	if(this != PovButton.dummy) { super.whenInactive(command); }
-		// 	return this;
-		// }
-		// @Override public Button whenReleased(final Runnable toRun, Subsystem... requirements) {
-		// 	if(this != PovButton.dummy) { super.whenInactive(toRun, requirements); }
-		// 	return this;
-		// }
-		// @Override public Button toggleWhenPressed(final Command command, boolean interruptible) {
-		// 	if(this != PovButton.dummy) { super.toggleWhenActive(command, interruptible); }
-		// 	return this;
-		// }
-		// @Override public Button toggleWhenPressed(final Command command) {
-		// 	if(this != PovButton.dummy) { super.toggleWhenActive(command); }
-		// 	return this;
-		// }
-		// @Override public Button cancelWhenPressed(final Command command) {
-		// 	if(this != PovButton.dummy) { super.cancelWhenActive(command); }
-		// 	return this;
-		// }
 
 
 	}
@@ -344,7 +278,7 @@ public class Input {
 		}
 		default PovButton getCallbackFrom(InputDevice i) {
 			if(this.compatible(i)) {
-				return i.getCallback(this.getValue());
+				return i.getTrigger(this.getValue());
 			}
 			return PovButton.dummy;
 		}

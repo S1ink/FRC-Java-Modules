@@ -17,9 +17,9 @@ public class ToggleTrigger extends Trigger {
 	}
 	public ToggleTrigger(BooleanSupplier t) { this(new Trigger(t)); }
 	
-	@Override public boolean get() {
-		return this.is_triggered;
-	}
+	// @Override public boolean get() {
+	// 	return this.is_triggered;
+	// }
 
 
 }
