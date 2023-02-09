@@ -6,8 +6,6 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.*;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 
 import frc.robot.team3407.commandbased.ToggleTrigger;
@@ -39,18 +37,54 @@ public class Input {
 	public static class AnalogSlewSupplier implements AnalogSupplier {
 
 		private final SlewRateLimiter limit;
-		private final AnalogSupplier source;
+		private final DoubleSupplier source;
 
-		public AnalogSlewSupplier(AnalogSupplier src) { this(src, Double.MAX_VALUE); }  // kind of pointless?
-		public AnalogSlewSupplier(AnalogSupplier src, double mrate) {
-			this.limit = new SlewRateLimiter(mrate, -mrate, src.get());
+		public AnalogSlewSupplier(DoubleSupplier src) { this(src, Double.MAX_VALUE); }  // kind of pointless?
+		public AnalogSlewSupplier(DoubleSupplier src, double mrate) {
+			this.limit = new SlewRateLimiter(mrate, -mrate, src.getAsDouble());
 			this.source = src;
 		}
 
 		@Override public double get() {
-			return this.limit.calculate(this.source.get());
+			return this.limit.calculate(this.source.getAsDouble());
 		}
 
+	}
+	/**
+	 * AnalogDeadzone applies a deadzone to an analog supplier, returning 0.0 if the input is within the deadzone (+/-)
+	 */
+	public static class AnalogDeadzone implements AnalogSupplier {
+		
+		private final DoubleSupplier source;
+		private final double deadzone;
+
+		public AnalogDeadzone(DoubleSupplier src, double dz) {
+			this.source = src;
+			this.deadzone = dz;
+		}
+
+		@Override public double get() {
+			double i = this.source.getAsDouble();
+			return Math.abs(i) > this.deadzone ? i : 0.0;
+		}
+
+	}
+	/**
+	 * AnalogScalar simply scales the input by a constant (multiplication)
+	 */
+	public static class AnalogScalar implements AnalogSupplier {
+
+		private final DoubleSupplier source;
+		private final double scale;
+
+		public AnalogScalar(DoubleSupplier src, double scl) {
+			this.source = src;
+			this.scale = scl;
+		}
+
+		@Override public double get() {
+			return this.source.getAsDouble() * this.scale;
+		}
 
 	}
 	/**
@@ -58,19 +92,60 @@ public class Input {
 	 */
 	public static class AnalogExponential implements AnalogSupplier {
 
-		private final AnalogSupplier source;
+		private final DoubleSupplier source;
 		private final double power;
 
-		public AnalogExponential(AnalogSupplier src, double pow) {
+		public AnalogExponential(DoubleSupplier src, double pow) {
 			this.source = src;
 			this.power = pow;
 		}
 
 		@Override public double get() {
-			double i = this.source.get();
+			double i = this.source.getAsDouble();
 			return Math.copySign(Math.pow(Math.abs(i), this.power), i);
 		}
 
+	}
+	/**
+	 * DriveInputSupplier allows for the application of a deadzone, rescale, and exponential power transformation on an input supplier
+	 */
+	public static class DriveInputSupplier implements AnalogSupplier {
+		
+		private final DoubleSupplier source;
+		private final double exp_pow;
+		private final double scale;		// when the input range is -1 to 1 this acts as a 'maximum output' modifier
+		private final double deadband;
+
+		public DriveInputSupplier(DoubleSupplier src, double deadband, double scale, double exp) {
+			this.source = src;
+			this.exp_pow = exp;
+			this.scale = scale;
+			this.deadband = deadband;
+		}
+		public DriveInputSupplier(DoubleSupplier src, double deadband, double scale) {
+			this(src, deadband, scale, 1.0);
+		}
+		public DriveInputSupplier(DoubleSupplier src, double deadband) {
+			this(src, deadband, 1.0, 1.0);
+		}
+
+		public static double compute(double x, double d) { return compute(x, d, 1.0, 1.0); }
+		public static double compute(double x, double d, double m) { return compute(x, d, m, 1.0); }
+		public static double compute(double x, double d, double m, double p) {
+			double ax = Math.abs(x);
+			if(ax < d) { return 0; }
+			double dp = d;
+			if(p > 1) {
+				dp = Math.pow(d, p);
+				ax = Math.pow(x, p);
+			}
+			double n = dp / (1.0 - dp);
+			return Math.signum(x) * m * ((1.0 + n) * ax - n);
+		}
+
+		@Override public double get() {
+			return compute(this.source.getAsDouble(), this.deadband, this.scale, this.exp_pow);
+		}
 
 	}
 
@@ -236,6 +311,18 @@ public class Input {
 		default AnalogSupplier getExponentialLimitedSupplier(int p, double mrate, double pow) {
 			if(this.compatible(p)) {
 				return new AnalogSlewSupplier(new AnalogExponential(()->DriverStation.getStickAxis(p, this.getValue()), pow), mrate);
+			}
+			return ()->0.0;
+		}
+		default AnalogSupplier getDriveInputSupplier(InputDevice i, double deadzone, double scale, double exp) {
+			if(this.compatible(i)) {
+				return new DriveInputSupplier(()->i.getRawAxis(this.getValue()), deadzone, scale, exp);
+			}
+			return ()->0.0;
+		}
+		default AnalogSupplier getDriveInputSupplier(int p, double deadzone, double scale, double exp) {
+			if(this.compatible(p)) {
+				return new DriveInputSupplier(()->DriverStation.getStickAxis(p, this.getValue()), deadzone, scale, exp);
 			}
 			return ()->0.0;
 		}
