@@ -1,5 +1,6 @@
 package frc.robot.team3407;
 
+import edu.wpi.first.networktables.NTSendableBuilder;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
@@ -32,6 +33,19 @@ public class ADIS16470 extends ADIS16470_IMU implements Gyro, Accelerometer {
 	}
 	public void setRange(Range r) {
 
+	}
+
+	@Override
+	public void initSendable(NTSendableBuilder b) {
+		super.initSendable(b);
+		b.addDoubleProperty("Rate", this::getRate, null);
+		b.addDoubleProperty("X Accel", this::getX, null);
+		b.addDoubleProperty("Y Accel", this::getY, null);
+		b.addDoubleProperty("Z Accel", this::getZ, null);
+		b.addDoubleProperty("X Comp Angle", super::getXComplementaryAngle, null);
+		b.addDoubleProperty("Y Comp Angle", super::getYComplementaryAngle, null);
+		b.addDoubleProperty("X Accel Angle", super::getXFilteredAccelAngle, null);
+		b.addDoubleProperty("Y Accel Angle", super::getYFilteredAccelAngle, null);
 	}
 
 

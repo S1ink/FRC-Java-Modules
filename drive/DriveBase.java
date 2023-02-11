@@ -4,10 +4,11 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.*;
-import frc.robot.team3407.Input.*;
-import frc.robot.team3407.drive.Types.*;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import edu.wpi.first.wpilibj.drive.*;
+
+import frc.robot.team3407.Input.*;
+import frc.robot.team3407.drive.Types.*;
 
 
 public class DriveBase extends SubsystemBase {
@@ -23,7 +24,7 @@ public class DriveBase extends SubsystemBase {
 			this.motors[1] = map.right;
 			this.drive = new DifferentialDrive(this.motors[0], this.motors[1]);
 		}
-		public <M extends MotorController>DifferentialBase(DriveMap_4<M> map) {
+		public<M extends MotorController> DifferentialBase(DriveMap_4<M> map) {
 			this.motors[0] = map.getLeftGroup();
 			this.motors[1] = map.getRightGroup();
 			this.drive = new DifferentialDrive(this.motors[0], this.motors[1]);
