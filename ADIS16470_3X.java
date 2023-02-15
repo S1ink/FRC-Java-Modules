@@ -7,8 +7,8 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.hal.SimBoolean;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.networktables.NTSendable;
-import edu.wpi.first.networktables.NTSendableBuilder;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -49,7 +49,7 @@ import java.nio.ByteOrder;
 "PMD.EmptyIfStmt",
 "PMD.EmptyStatementNotInLoop"
 })
-public class ADIS16470_3X implements Accelerometer, AutoCloseable, NTSendable {
+public class ADIS16470_3X implements Accelerometer, AutoCloseable, Sendable {
 	/* ADIS16470 Register Map Declaration */
 	private static final int FLASH_CNT = 0x00; // Flash memory write count
 	private static final int DIAG_STAT = 0x02; // Diagnostic and operational status
@@ -1242,8 +1242,8 @@ public class ADIS16470_3X implements Accelerometer, AutoCloseable, NTSendable {
 	public void setRange(Range r) {}
 
 	@Override
-	public void initSendable(NTSendableBuilder b) {
-		b.setSmartDashboardType("ADIS16470 IMU - Upgraded");
+	public void initSendable(SendableBuilder b) {
+		// b.setSmartDashboardType("ADIS16470 IMU - Upgraded");
 		b.addDoubleProperty("X Accel", this::getAccelX, null);
 		b.addDoubleProperty("Y Accel", this::getAccelY, null);
 		b.addDoubleProperty("Z Accel", this::getAccelZ, null);
@@ -1255,7 +1255,7 @@ public class ADIS16470_3X implements Accelerometer, AutoCloseable, NTSendable {
 		b.addDoubleProperty("Z Angle Rate", ()->getRate(IMUAxis.kZ), null);
 	}
 
-	private static class GyroImpl implements Gyro, NTSendable {
+	private static class GyroImpl implements Gyro, Sendable {
 		private final ADIS16470_3X src;
 		private IMUAxis axis;
 
@@ -1272,7 +1272,7 @@ public class ADIS16470_3X implements Accelerometer, AutoCloseable, NTSendable {
 			{ return -src.getRate(this.axis); }
 		@Override public double getAngle()
 			{ return -src.getAngle(this.axis); }
-		@Override public void initSendable(NTSendableBuilder b) {
+		@Override public void initSendable(SendableBuilder b) {
 			b.setSmartDashboardType("Gyro");
 			b.addDoubleProperty("Angle", this::getRate, null);
 			b.addDoubleProperty("Rate", this::getRate, null);
