@@ -39,6 +39,7 @@ public class ADIS16470 extends ADIS16470_IMU implements Gyro, Accelerometer {
 	public void initSendable(NTSendableBuilder b) {
 		super.initSendable(b);
 		b.addDoubleProperty("Rate", this::getRate, null);
+		b.addDoubleProperty("Angle", this::getAngle, null);
 		b.addDoubleProperty("X Accel", this::getX, null);
 		b.addDoubleProperty("Y Accel", this::getY, null);
 		b.addDoubleProperty("Z Accel", this::getZ, null);
