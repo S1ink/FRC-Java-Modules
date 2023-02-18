@@ -1,4 +1,4 @@
-package frc.robot.team3407;
+package frc.robot.team3407.controls;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -7,8 +7,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.*;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-
-import frc.robot.team3407.commandbased.ToggleTrigger;
 
 
 /**
@@ -158,9 +156,12 @@ public class Input {
 
 		private PovButton[] buttons = null;
 		private boolean verifyInfo() {
-			if(super.isConnected() && this.buttons == null) {
-				this.buttons = new PovButton[super.getButtonCount() + (super.getPOVCount() * 4)];
-				return true;
+			if(super.isConnected()) {
+				int digital_count = super.getButtonCount() + (super.getPOVCount() * 4);
+				if(this.buttons == null || this.buttons.length != digital_count) {
+					this.buttons = new PovButton[digital_count];
+					return true;
+				}
 			} else if(!super.isConnected() && this.buttons != null) {
 				this.buttons = null;
 				return false;
@@ -381,15 +382,15 @@ public class Input {
 			}
 			return PovButton.dummy;
 		}
-		default ToggleTrigger getToggleFrom(InputDevice i) {
-			return new ToggleTrigger(getCallbackFrom(i));
-		}
-		default ToggleTrigger getToggleFrom(GenericHID i) {
-			return new ToggleTrigger(getCallbackFrom(i));
-		}
-		default ToggleTrigger getToggleFrom(int p) {
-			return new ToggleTrigger(getCallbackFrom(p));
-		}
+		// default ToggleTrigger getToggleFrom(InputDevice i) {
+		// 	return new ToggleTrigger(getCallbackFrom(i));
+		// }
+		// default ToggleTrigger getToggleFrom(GenericHID i) {
+		// 	return new ToggleTrigger(getCallbackFrom(i));
+		// }
+		// default ToggleTrigger getToggleFrom(int p) {
+		// 	return new ToggleTrigger(getCallbackFrom(p));
+		// }
 		default boolean getValueOf(GenericHID i) {
 			if(this.isPovBindOf(i)) {
 				return (i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();

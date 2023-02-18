@@ -6,8 +6,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import edu.wpi.first.wpilibj.drive.*;
-
-import frc.robot.team3407.Input.*;
+import frc.robot.team3407.controls.Input.*;
 import frc.robot.team3407.drive.Types.*;
 
 
