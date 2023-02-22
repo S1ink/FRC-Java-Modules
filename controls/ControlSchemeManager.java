@@ -6,7 +6,7 @@ import edu.wpi.first.hal.DriverStationJNI;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import frc.robot.team3407.controls.Input.InputDevice;
+import frc.robot.team3407.controls.Input.*;
 
 
 public class ControlSchemeManager {
@@ -58,7 +58,44 @@ public class ControlSchemeManager {
 		}
 
 	}
-    
+	public static class CompatibilityTester implements ControlSchemeBase.Compat_F {
+		private final InputMap[] requirements;
+
+		public CompatibilityTester(InputMap... reqs) {
+			this.requirements = reqs;
+		}
+
+		@Override
+		public int[] test(InputDevice... inputs) {
+			int[] ret = new int[this.requirements.length];
+			int[] avail = {0, 1, 2, 3, 4, 5};	// 0 through (DriverStationJNI.kMaxJoysticks - 1)
+			int found = 0;
+			for(int i = 0; i < (avail.length - found); i++) {		// for each port that has not been claimed:
+				int p = avail[found + i];
+				for(int r = 0; r < (ret.length - found); r++) {		// for each remaining requirement:
+					if(this.requirements[r].compatible(p)) {
+						ret[found] = p;
+						if(i != 0) {
+							for(int q = i + found; q > found; q--) {
+								avail[q] = avail[q - 1];
+							}
+						}
+						found++;
+						i--;
+						break;
+					}
+				}
+				if(found == ret.length) {
+					return ret;
+				}
+			}
+			return null;
+		}
+
+	}
+
+
+
 	private final SendableChooser<Integer> options = new SendableChooser<>();
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
 	private final InputDevice[] inputs = new InputDevice[DriverStationJNI.kMaxJoysticks];

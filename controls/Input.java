@@ -105,7 +105,7 @@ public class Input {
 
 	}
 	/**
-	 * DriveInputSupplier allows for the application of a deadzone, rescale, and exponential power transformation on an input supplier
+	 * DriveInputSupplier allows for the application of a deadzone, rescale, and exponential power transformation on an input supplier - useful for driving contexts as the name suggests
 	 */
 	public static class DriveInputSupplier implements AnalogSupplier {
 		
@@ -488,12 +488,26 @@ public class Input {
 			return ()->false;
 		}
 	}
+	/**
+	 * InputMap defines all functions available to Input classes that contain an AnalogMap and DigitalMap
+	 */
+	public static abstract class InputMap {
+		public abstract boolean compatible(GenericHID i);
+		public abstract boolean compatible(int p);
+
+		protected boolean compat(GenericHID i, AnalogMap a, DigitalMap d) {
+			return a.compatible(i) && d.compatible(i);
+		}
+		protected boolean compat(int p, AnalogMap a, DigitalMap d) {
+			return a.compatible(p) && d.compatible(p);
+		}
+	}
 
 
 	/**
 	 * All button and axis indices for an Xbox controller
 	 */
-	public static class Xbox {
+	public static class Xbox extends InputMap {
 		public static enum Analog implements AnalogMap {
 			LX(0), RX(4), LY(1), RY(5), LT(2), RT(3), 
 			TOTAL(6);
@@ -517,11 +531,19 @@ public class Input {
 			public int getValue() { return this.value; }
 			public int getTotal() { return TOTAL.value; }
 		}
+
+		private Xbox() {}
+		public static final Xbox Map = new Xbox();
+
+		public boolean compatible(GenericHID i)
+			{ return super.compat(i, Analog.TOTAL, Digital.TOTAL); }
+		public boolean compatible(int p)
+			{ return super.compat(p, Analog.TOTAL, Digital.TOTAL); }
 	}
 	/**
 	 * All button and axis indices for a Playstation controller
 	 */
-	public static class PlayStation {
+	public static class PlayStation extends InputMap {
 		public static enum Analog implements AnalogMap {
 			LX(0), LY(1), RX(2), RY(5), LT(3), RT(4),
 			TOTAL(6);
@@ -545,11 +567,19 @@ public class Input {
 			public int getValue() { return this.value; }
 			public int getTotal() { return TOTAL.value; }
 		}
+
+		private PlayStation() {}
+		public static final PlayStation Map = new PlayStation();
+
+		public boolean compatible(GenericHID i)
+			{ return super.compat(i, Analog.TOTAL, Digital.TOTAL); }
+		public boolean compatible(int p)
+			{ return super.compat(p, Analog.TOTAL, Digital.TOTAL); }
 	}
 	/**
 	 * All button and axis indices for an Attack3 joystick
 	 */
-	public static class Attack3 {
+	public static class Attack3 extends InputMap {
 		public static enum Analog  implements AnalogMap {
 			X(0), Y(1), S(2),   // ~ X-Axis, Y-Axis, Slider thing on the bottom
 			TOTAL(3);
@@ -571,11 +601,18 @@ public class Input {
 			public int getValue() { return this.value; }
 			public int getTotal() { return TOTAL.value; }
 		}
+
+		private Attack3() {}
+		public static final Attack3 Map = new Attack3();
+		public boolean compatible(GenericHID i)
+			{ return super.compat(i, Analog.TOTAL, Digital.TOTAL); }
+		public boolean compatible(int p)
+			{ return super.compat(p, Analog.TOTAL, Digital.TOTAL); }
 	}
 	/**
 	 * All button and axis indices for an Extreme3D joystick
 	 */
-	public static class Extreme3d {
+	public static class Extreme3d extends InputMap {
 		public static enum Analog  implements AnalogMap {
 			X(0), Y(1), Z(2), S(3),     // x-axis, y-axis, swivell-axis, slider-axis
 			TOTAL(4);
@@ -597,7 +634,14 @@ public class Input {
 			public int getValue() { return this.value; }
 			public int getTotal() { return TOTAL.value; }
 		}
-	}
 
+		private Extreme3d() {}
+		public static final Extreme3d Map = new Extreme3d();
+
+		public boolean compatible(GenericHID i)
+			{ return super.compat(i, Analog.TOTAL, Digital.TOTAL); }
+		public boolean compatible(int p)
+			{ return super.compat(p, Analog.TOTAL, Digital.TOTAL); }
+	}
 
 }
