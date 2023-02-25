@@ -5,6 +5,8 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+// import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
+// import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.*;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 
@@ -197,6 +199,19 @@ public class Input {
 
 		public Trigger connectionTrigger() {
 			return new Trigger(()->{ return super.isConnected(); });
+		}
+
+
+		public static void logConnections() {
+			System.out.println("Connected DS Inputs:");
+			for(int i = 0; i < DriverStation.kJoystickPorts; i++) {
+				if(DriverStation.isJoystickConnected(i)) {
+					System.out.println("\tInput[" + i + "] >> Axis count: " +
+						DriverStation.getStickAxisCount(i) + ", Button count: " +
+						DriverStation.getStickButtonCount(i) + ", POV count: " +
+						DriverStation.getStickPOVCount(i));
+				}
+			}
 		}
 
 
