@@ -2,27 +2,40 @@ package frc.robot.team3407.controls;
 
 import java.util.ArrayList;
 
-import edu.wpi.first.hal.DriverStationJNI;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.team3407.controls.Input.*;
 
 
+/** ControlSchemeManager manages an array of control schemes and automatically assigns input-action bindings depending on the inputs that are available */
 public class ControlSchemeManager {
 
+	/** ControlSchemeBase defines the requirements for a compatible control scheme */
 	public static interface ControlSchemeBase {
 		public static interface Compat_F {
-			public int[] test(InputDevice... inputs);
+			public InputDevice[] test(InputDevice... inputs);
 		}
 		public static interface Setup_F {
 			public void run(InputDevice... inputs);
 		}
-		
-		public String getDesc();
-		public int[] compatible(InputDevice... inputs);
+
+		/** Determines if the inputs currently connected to the DS are sufficient to initialize the control scheme
+		 * @param inputs an array of available inputs - usually of length DriverStation.kJoystickPorts
+		 * @return an array of inputs that should be passed to setup() to initialize the control scheme, or null if the requirements are not met
+		 */
+		public InputDevice[] compatible(InputDevice... inputs);
+		/** Initializes the control scheme.
+		 * @param inputs The input array as returned directly from compatible(). The order of inputs in that array is the same as in this array
+		 */
 		public void setup(InputDevice... inputs);
+		/** Optional callback for deiniting the scheduled bindings */
 		default public void shutdown() {}
+		/** What name should the selector use to identify this control scheme
+		 * @return The name or description of the control scheme
+		 */
+		public String getDesc();
 	}
 	public static class ControlScheme implements ControlSchemeBase {
 		private final Compat_F compatibility;
@@ -43,7 +56,7 @@ public class ControlSchemeManager {
 			return this.desc;
 		}
 		@Override
-		public int[] compatible(InputDevice... inputs) {
+		public InputDevice[] compatible(InputDevice... inputs) {
 			return this.compatibility.test(inputs);
 		}
 		@Override
@@ -58,35 +71,51 @@ public class ControlSchemeManager {
 		}
 
 	}
-	public static class CompatibilityTester implements ControlSchemeBase.Compat_F {
+	public static class AutomatedTester implements ControlSchemeBase.Compat_F {
 		private final InputMap[] requirements;
+		private final InputDevice[] buff;	// the array [reference] is final but the assignments are not
 
-		public CompatibilityTester(InputMap... reqs) {
+		public AutomatedTester(InputMap... reqs) {
 			this.requirements = reqs;
+			this.buff = new InputDevice[reqs.length];
 		}
 
-		@Override
-		public int[] test(InputDevice... inputs) {
-			int[] ret = new int[this.requirements.length];
-			int[] avail = {0, 1, 2, 3, 4, 5};	// 0 through (DriverStationJNI.kMaxJoysticks - 1)
+		@Override	/* This is basically just a big matching function */
+		public InputDevice[] test(InputDevice... inputs) {
+			int[] avail, reqs = new int[this.requirements.length];	// look up tables for inputs (param) and this.requirements, respectively
 			int found = 0;
-			for(int i = 0; i < (avail.length - found); i++) {		// for each port that has not been claimed:
-				int p = avail[found + i];
-				for(int r = 0; r < (ret.length - found); r++) {		// for each remaining requirement:
-					if(this.requirements[r].compatible(p)) {
-						ret[found] = p;
-						if(i != 0) {
-							for(int q = i + found; q > found; q--) {
-								avail[q] = avail[q - 1];
+			if(inputs.length == DriverStation.kJoystickPorts) {
+				avail = new int[]{0, 1, 2, 3, 4, 5};	// 0 through (DriverStation.kJoystickPorts - 1)
+			} else {
+				avail = new int[inputs.length];
+				for(int i = 0; i < avail.length; i++) {
+					avail[i] = inputs[i].getPort();
+				}
+			}
+			for(int i = 0; i < reqs.length; i++) {
+				reqs[i] = i;
+			}
+			for(int i = found; i < avail.length; i++) {		// for each remaining port:
+				int p = avail[i];
+				for(int r = found; r < reqs.length; r++) {			// for each remaining requirement:
+					if(this.requirements[reqs[r]].compatible(p)) {			// if compatible:
+						this.buff[reqs[r]] = inputs[p];
+						if(i != found) {
+							for(int q = i; q > found; q--) {	// start at i, work backwards until @ found
+								avail[q] = avail[q - 1];		// bump all vals before i up an index
+							}
+						}
+						if(r != found) {
+							for(int q = r; q > found; q--) {	// same as above but for the reqs look up table
+								reqs[q] = reqs[q - 1];
 							}
 						}
 						found++;
-						i--;
 						break;
 					}
 				}
-				if(found == ret.length) {
-					return ret;
+				if(found == this.requirements.length) {
+					return this.buff;
 				}
 			}
 			return null;
@@ -98,7 +127,7 @@ public class ControlSchemeManager {
 
 	private final SendableChooser<Integer> options = new SendableChooser<>();
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
-	private final InputDevice[] inputs = new InputDevice[DriverStationJNI.kMaxJoysticks];
+	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];
 	private Thread searcher;
 
 	public ControlSchemeManager() {
@@ -128,31 +157,40 @@ public class ControlSchemeManager {
 	public boolean runInitial() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
-				System.out.println("Beginning input search thread.");
-				InputDevice[] buff = null;
-				int[] ports = null;
+				System.out.println("ControlSchemeManager: Beginning input search.");
+				InputDevice[] devices = null;
 				for(;;) {
 					int id = this.options.getSelected();
 					if(id < 0) {
-						for(ControlSchemeBase cs : this.schemes) {
-							ports = cs.compatible(this.inputs);
-							if(ports != null && ports.length > 0) {
-								buff = new InputDevice[ports.length];
-								for(int i = 0; i < ports.length; i++) {
-									buff[i] = this.inputs[ports[i]];
-								}
-								cs.setup(buff);
-								return;
+						InputDevice[] buff = null;
+						int compat = -1;
+						for(int i = 0; i < this.schemes.size(); i++) {
+							buff = this.schemes.get(i).compatible(this.inputs);
+							if(buff != null && buff.length > 0) {
+								compat = (compat == -1) ? i : -2;
+								devices = buff;
 							}
 						}
-					} else {
-						ports = this.schemes.get(id).compatible(this.inputs);
-						if(ports != null && ports.length > 0) {
-							buff = new InputDevice[ports.length];
-							for(int i = 0; i < ports.length; i++) {
-								buff[i] = this.inputs[ports[i]];
+						if(compat >= 0) {
+							this.schemes.get(compat).setup(devices);
+							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
+							for(InputDevice d : devices) {
+								InputDevice.logDevice(d);
 							}
-							this.schemes.get(id).setup(buff);
+							System.out.println();
+							return;
+						} else if(compat < -1) {
+							System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
+						}
+					} else {
+						devices = this.schemes.get(id).compatible(this.inputs);
+						if(devices != null && devices.length > 0) {
+							this.schemes.get(id).setup(devices);
+							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
+							for(InputDevice d : devices) {
+								InputDevice.logDevice(d);
+							}
+							System.out.println();
 							return;
 						}
 					}
@@ -168,43 +206,52 @@ public class ControlSchemeManager {
 	public boolean runContinuous() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
-				System.out.println("Beginning input search thread.");
-				InputDevice[] buff = null;
-				int[] ports = null;
+				System.out.println("ControlSchemeManager: Beginning input search.");
+				InputDevice[] devices = null;
 				int prev_selected = -1;
 				int prev_active_id = -1;
 				boolean has_any = false;
 				for(;;) {
 					int id = this.options.getSelected();
-					if(!has_any || (has_any && prev_selected != id && id <= 0)) {
+					if(!has_any || (prev_selected != id && prev_active_id != id)) {
 						if(id < 0) {
-							for(int c = 0; c < this.schemes.size(); c++) {
-								ports = this.schemes.get(c).compatible(this.inputs);
-								if(ports != null && ports.length > 0) {
-									buff = new InputDevice[ports.length];
-									for(int i = 0; i < ports.length; i++) {
-										buff[i] = this.inputs[ports[i]];
-									}
-									if(has_any) {
-										this.schemes.get(prev_active_id).shutdown();
-									}
-									this.schemes.get(c).setup(buff);
-									prev_active_id = c;
-									prev_selected = c;
-									has_any = true;
+							InputDevice[] buff = null;
+							int compat = -1;
+							for(int i = 0; i < this.schemes.size(); i++) {
+								buff = this.schemes.get(i).compatible(this.inputs);
+								if(buff != null && buff.length > 0) {
+									compat = (compat == -1) ? i : -2;
+									devices = buff;
 								}
 							}
-						} else {
-							ports = this.schemes.get(id).compatible(this.inputs);
-							if(ports != null && ports.length > 0) {
-								buff = new InputDevice[ports.length];
-								for(int i = 0; i < ports.length; i++) {
-									buff[i] = this.inputs[ports[i]];
-								}
+							if(compat >= 0) {
 								if(has_any) {
 									this.schemes.get(prev_active_id).shutdown();
 								}
-								this.schemes.get(id).setup(buff);
+								this.schemes.get(compat).setup(devices);
+								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
+								for(InputDevice d : devices) {
+									InputDevice.logDevice(d);
+								}
+								System.out.println();
+								prev_active_id = compat;
+								prev_selected = id;
+								has_any = true;
+							} else if(compat < -1 && !has_any) {
+								System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
+							}
+						} else {
+							devices = this.schemes.get(id).compatible(this.inputs);
+							if(devices != null && devices.length > 0) {
+								if(has_any) {
+									this.schemes.get(prev_active_id).shutdown();
+								}
+								this.schemes.get(id).setup(devices);
+								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
+								for(InputDevice d : devices) {
+									InputDevice.logDevice(d);
+								}
+								System.out.println();
 								prev_active_id = id;
 								prev_selected = id;
 								has_any = true;

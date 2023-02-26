@@ -202,14 +202,20 @@ public class Input {
 		}
 
 
+		public static void logDevice(GenericHID i) { logDevice(i.getPort()); }
+		public static void logDevice(int p) {
+			if(DriverStation.isJoystickConnected(p)) {
+				System.out.println("\tDS Port[" + p + "] >> Axis count: " +
+					DriverStation.getStickAxisCount(p) + ", Button count: " +
+					DriverStation.getStickButtonCount(p) + ", POV count: " +
+					DriverStation.getStickPOVCount(p));
+			}
+		}
 		public static void logConnections() {
 			System.out.println("Connected DS Inputs:");
 			for(int i = 0; i < DriverStation.kJoystickPorts; i++) {
 				if(DriverStation.isJoystickConnected(i)) {
-					System.out.println("\tInput[" + i + "] >> Axis count: " +
-						DriverStation.getStickAxisCount(i) + ", Button count: " +
-						DriverStation.getStickButtonCount(i) + ", POV count: " +
-						DriverStation.getStickPOVCount(i));
+					logDevice(i);
 				}
 			}
 		}
