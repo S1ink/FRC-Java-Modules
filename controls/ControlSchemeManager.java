@@ -125,10 +125,17 @@ public class ControlSchemeManager {
 
 
 
+	public static enum AmbiguousSolution {
+		NONE,
+		PREFER_COMPLEX,
+		PREFER_SIMPLE
+	}
+
 	private final SendableChooser<Integer> options = new SendableChooser<>();
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
 	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];
 	private Thread searcher;
+	private AmbiguousSolution amb_preference = AmbiguousSolution.NONE;
 
 	public ControlSchemeManager() {
 		this.options.setDefaultOption("Automatic", Integer.valueOf(-1));
@@ -153,22 +160,44 @@ public class ControlSchemeManager {
 	public void publishSelector(String n) {
 		SmartDashboard.putData(n, this.options);
 	}
+	public void setAmbiguousSolution(AmbiguousSolution s) {
+		this.amb_preference = s;
+	}
 
 	public boolean runInitial() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search.");
-				InputDevice[] devices = null;
+				InputDevice[] devices = null, buff = null;
 				for(;;) {
 					int id = this.options.getSelected();
 					if(id < 0) {
-						InputDevice[] buff = null;
+						devices = buff = null;
 						int compat = -1;
 						for(int i = 0; i < this.schemes.size(); i++) {
 							buff = this.schemes.get(i).compatible(this.inputs);
 							if(buff != null && buff.length > 0) {
-								compat = (compat == -1) ? i : -2;
-								devices = buff;
+								switch(this.amb_preference) {
+									case PREFER_COMPLEX: {
+										if(devices == null || buff.length > devices.length) {
+											devices = buff;
+											compat = i;
+										}
+										break;
+									}
+									case PREFER_SIMPLE: {
+										if(devices == null || buff.length < devices.length) {
+											devices = buff;
+											compat = i;
+										}
+										break;
+									}
+									default:
+									case NONE: {
+										compat = (compat == -1) ? i : -2;
+										devices = buff;
+									}
+								}
 							}
 						}
 						if(compat >= 0) {
@@ -207,7 +236,7 @@ public class ControlSchemeManager {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search.");
-				InputDevice[] devices = null;
+				InputDevice[] devices = null, buff = null;
 				int prev_selected = -1;
 				int prev_active_id = -1;
 				boolean has_any = false;
@@ -215,13 +244,32 @@ public class ControlSchemeManager {
 					int id = this.options.getSelected();
 					if(!has_any || (prev_selected != id && prev_active_id != id)) {
 						if(id < 0) {
-							InputDevice[] buff = null;
+							devices = buff = null;
 							int compat = -1;
 							for(int i = 0; i < this.schemes.size(); i++) {
 								buff = this.schemes.get(i).compatible(this.inputs);
 								if(buff != null && buff.length > 0) {
-									compat = (compat == -1) ? i : -2;
-									devices = buff;
+									switch(this.amb_preference) {
+										case PREFER_COMPLEX: {
+											if(devices == null || buff.length > devices.length) {
+												devices = buff;
+												compat = i;
+											}
+											break;
+										}
+										case PREFER_SIMPLE: {
+											if(devices == null || buff.length < devices.length) {
+												devices = buff;
+												compat = i;
+											}
+											break;
+										}
+										default:
+										case NONE: {
+											compat = (compat == -1) ? i : -2;
+											devices = buff;
+										}
+									}
 								}
 							}
 							if(compat >= 0) {
