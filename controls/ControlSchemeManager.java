@@ -156,6 +156,18 @@ public class ControlSchemeManager {
 		this.options.addOption(d, Integer.valueOf(this.schemes.size()));
 		this.schemes.add(new ControlScheme(d, c, s, e));
 	}
+	public void setDefault(ControlSchemeBase c) {
+		this.options.setDefaultOption(c.getDesc(), Integer.valueOf(this.schemes.size()));
+		this.schemes.add(c);
+	}
+	public void setDefault(String d, ControlSchemeBase.Compat_F c, ControlSchemeBase.Setup_F s) {
+		this.options.setDefaultOption(d, Integer.valueOf(this.schemes.size()));
+		this.schemes.add(new ControlScheme(d, c, s));
+	}
+	public void setDefault(String d, ControlSchemeBase.Compat_F c, ControlSchemeBase.Setup_F s, Runnable e) {
+		this.options.setDefaultOption(d, Integer.valueOf(this.schemes.size()));
+		this.schemes.add(new ControlScheme(d, c, s, e));
+	}
 	public void publishSelector() { this.publishSelector("Control Scheme"); }
 	public void publishSelector(String n) {
 		SmartDashboard.putData(n, this.options);
