@@ -247,7 +247,7 @@ public class ControlSchemeManager {
 	public boolean runContinuous() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
-				System.out.println("ControlSchemeManager: Beginning input search.");
+				System.out.println("ControlSchemeManager: Beginning input search...");
 				InputDevice[] devices = null, buff = null;
 				int prev_selected = -1;
 				int prev_active_id = -1;

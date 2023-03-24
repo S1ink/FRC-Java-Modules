@@ -135,7 +135,7 @@ public class Input {
 			double ax = Math.abs(x);
 			if(ax < d) { return 0; }
 			double dp = d;
-			if(p > 1) {
+			if(p != 1.0) {
 				dp = Math.pow(d, p);
 				ax = Math.pow(x, p);
 			}
