@@ -2,6 +2,8 @@ package frc.robot.team3407.controls;
 
 import java.util.ArrayList;
 
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -10,7 +12,7 @@ import frc.robot.team3407.controls.Input.*;
 
 
 /** ControlSchemeManager manages an array of control schemes and automatically assigns input-action bindings depending on the inputs that are available */
-public class ControlSchemeManager {
+public class ControlSchemeManager implements Sendable {
 
 	/** ControlSchemeBase defines the requirements for a compatible control scheme */
 	public static interface ControlSchemeBase {
@@ -135,6 +137,7 @@ public class ControlSchemeManager {
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
 	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];
 	private Thread searcher;
+	private String applied = "None";
 	private AmbiguousSolution amb_preference = AmbiguousSolution.NONE;
 
 	public ControlSchemeManager() {
@@ -142,6 +145,11 @@ public class ControlSchemeManager {
 		for(int i = 0; i < this.inputs.length; i++) {
 			this.inputs[i] = new InputDevice(i);
 		}
+	}
+
+	@Override
+	public void initSendable(SendableBuilder b) {
+		b.addStringProperty("Applied Control Scheme", ()->this.applied, null);
 	}
 
 	public void addScheme(ControlSchemeBase c) {
@@ -170,7 +178,8 @@ public class ControlSchemeManager {
 	}
 	public void publishSelector() { this.publishSelector("Control Scheme"); }
 	public void publishSelector(String n) {
-		SmartDashboard.putData(n, this.options);
+		SmartDashboard.putData(n + "/Selector", this.options);
+		SmartDashboard.putData(n, this);
 	}
 	public void setAmbiguousSolution(AmbiguousSolution s) {
 		this.amb_preference = s;
@@ -214,6 +223,7 @@ public class ControlSchemeManager {
 						}
 						if(compat >= 0) {
 							this.schemes.get(compat).setup(devices);
+							this.applied = this.schemes.get(compat).getDesc();
 							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
 							for(InputDevice d : devices) {
 								InputDevice.logDevice(d);
@@ -227,6 +237,7 @@ public class ControlSchemeManager {
 						devices = this.schemes.get(id).compatible(this.inputs);
 						if(devices != null && devices.length > 0) {
 							this.schemes.get(id).setup(devices);
+							this.applied = this.schemes.get(id).getDesc();
 							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
 							for(InputDevice d : devices) {
 								InputDevice.logDevice(d);
@@ -289,6 +300,7 @@ public class ControlSchemeManager {
 									this.schemes.get(prev_active_id).shutdown();
 								}
 								this.schemes.get(compat).setup(devices);
+								this.applied = this.schemes.get(compat).getDesc();
 								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
 								for(InputDevice d : devices) {
 									InputDevice.logDevice(d);
@@ -307,6 +319,7 @@ public class ControlSchemeManager {
 									this.schemes.get(prev_active_id).shutdown();
 								}
 								this.schemes.get(id).setup(devices);
+								this.applied = this.schemes.get(id).getDesc();
 								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
 								for(InputDevice d : devices) {
 									InputDevice.logDevice(d);
