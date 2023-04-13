@@ -5,8 +5,8 @@ import java.util.function.DoubleSupplier;
 
 public final class DriveSupplier {
 
-	/** A supplier of l/r wheel speeds for a tankdrive setup */
-	public static interface TDriveSupplier {
+	/** A supplier of l/r wheel speeds for a differential drivebase */
+	public static interface DifferentialDriveSupplier {
 		public static class CombinedOutput {
 			public CombinedOutput(double l, double r) { this.left = l; this.right = r; }
 			public CombinedOutput() {}
@@ -24,7 +24,7 @@ public final class DriveSupplier {
 	}
 
 	/** Suppliers that always return the same value. Provides helpers for different generation types */
-	public static class StaticSupplier implements TDriveSupplier {
+	public static class StaticSupplier implements DifferentialDriveSupplier {
 		public final double l, r;
 		public StaticSupplier (double l, double r) {
 			this.l = l;
@@ -41,7 +41,7 @@ public final class DriveSupplier {
 		public static StaticSupplier genArcade(double fb, double t) { return new StaticSupplier(fb + t, fb - t); }
 	}
 	/** Default tank input converter that simply passes the values supplied */
-	public static class TankSupplier implements TDriveSupplier {
+	public static class TankSupplier implements DifferentialDriveSupplier {
 		protected final DoubleSupplier l, r;
 		public TankSupplier(DoubleSupplier l, DoubleSupplier r) {
 			this.l = l;
@@ -78,7 +78,7 @@ public final class DriveSupplier {
 		}
 	}
 	/** Arcade input converter that simply adds the turning rate to the f/b rate for each side */
-	public static class ArcadeSupplier implements TDriveSupplier {
+	public static class ArcadeSupplier implements DifferentialDriveSupplier {
 		protected final DoubleSupplier f, t;
 		public ArcadeSupplier(DoubleSupplier f, DoubleSupplier t) {
 			this.f = f;
