@@ -94,7 +94,7 @@ public final class DriveSupplier {
 			return this.f.getAsDouble() - this.t.getAsDouble();
 		}
 	}
-	/** Arcade input converter that limits either side to the provided maximum output magnitude, and prioritizes turning over f/b */
+	/** Arcade input converter that limits either side to the provided maximum output magnitude, and prioritizes turning rate over f/b velocity */
 	public static class ArcadeSupplierLM extends ArcadeSupplier {
 		protected final DoubleSupplier max;
 		public ArcadeSupplierLM(DoubleSupplier f, DoubleSupplier t, DoubleSupplier max) {

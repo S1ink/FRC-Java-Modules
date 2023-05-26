@@ -133,9 +133,9 @@ public class ControlSchemeManager implements Sendable {
 		PREFER_SIMPLE
 	}
 
-	private final SendableChooser<Integer> options = new SendableChooser<>();
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
-	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];
+	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];	// make static?
+	private SendableChooser<Integer> options = new SendableChooser<>();
 	private Thread searcher;
 	private String applied = "None";
 	private AmbiguousSolution amb_preference = AmbiguousSolution.NONE;
@@ -183,6 +183,12 @@ public class ControlSchemeManager implements Sendable {
 	}
 	public void setAmbiguousSolution(AmbiguousSolution s) {
 		this.amb_preference = s;
+	}
+
+	synchronized public void clearSelection() {
+		this.options = new SendableChooser<>();
+		this.options.setDefaultOption("Automatic", Integer.valueOf(-1));
+		this.schemes.clear();
 	}
 
 	public boolean runInitial() {
