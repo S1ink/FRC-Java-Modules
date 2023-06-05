@@ -17,4 +17,14 @@ public class Util {
 		return t;
 	}
 
+	public static double zeroRange(double v, double epsilon) {
+		return (v < epsilon && v > -epsilon) ? 0.0 : v;
+	}
+	public static double clamp(double v, double min, double max) {
+		return Math.min(max, Math.max(min, v));
+	}
+	public static double clampEq(double v, double range) {
+		return clamp(v, -Math.abs(range), Math.abs(range));
+	}
+
 }
