@@ -165,6 +165,9 @@ public class ControlSchemeManager implements Sendable {
 		this.options.addOption(d, Integer.valueOf(this.schemes.size()));
 		this.schemes.add(new ControlScheme(d, c, s, e));
 	}
+	public void addScheme(String d, ControlSchemeBase.Setup_F s, InputMap... reqs) {
+		this.addScheme(d, new AutomatedTester(reqs), s);
+	}
 	public void setDefault(ControlSchemeBase c) {
 		this.options.setDefaultOption(c.getDesc(), Integer.valueOf(this.schemes.size()));
 		this.schemes.add(c);
@@ -176,6 +179,9 @@ public class ControlSchemeManager implements Sendable {
 	public void setDefault(String d, ControlSchemeBase.Compat_F c, ControlSchemeBase.Setup_F s, Runnable e) {
 		this.options.setDefaultOption(d, Integer.valueOf(this.schemes.size()));
 		this.schemes.add(new ControlScheme(d, c, s, e));
+	}
+	public void setDefault(String d, ControlSchemeBase.Setup_F s, InputMap... reqs) {
+		this.setDefault(d, new AutomatedTester(reqs), s);
 	}
 	public void publishSelector() { this.publishSelector("Control Scheme"); }
 	public void publishSelector(String n) {
