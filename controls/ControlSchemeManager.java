@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import frc.robot.team3407.SenderNT;
 import frc.robot.team3407.controls.Input.*;
 
 
@@ -183,11 +184,18 @@ public class ControlSchemeManager implements Sendable {
 	public void setDefault(String d, ControlSchemeBase.Setup_F s, InputMap... reqs) {
 		this.setDefault(d, new AutomatedTester(reqs), s);
 	}
+
 	public void publishSelector() { this.publishSelector("Control Scheme"); }
 	public void publishSelector(String n) {
 		SmartDashboard.putData(n + "/Selector", this.options);
 		SmartDashboard.putData(n, this);
 	}
+	public void publishSelector(SenderNT nt) { this.publishSelector(nt, "Control Scheme"); }
+	public void publishSelector(SenderNT nt, String n) {
+		nt.putData(n + "/Selector", this.options);
+		nt.putData(n, this);
+	}
+
 	public void setAmbiguousSolution(AmbiguousSolution s) {
 		this.amb_preference = s;
 	}
@@ -197,6 +205,7 @@ public class ControlSchemeManager implements Sendable {
 		this.options.setDefaultOption("Automatic", Integer.valueOf(-1));
 		this.schemes.clear();
 	}
+
 
 	public boolean runInitialThread() {
 		if(this.searcher == null || !this.searcher.isAlive()) {

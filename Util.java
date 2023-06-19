@@ -17,6 +17,15 @@ public class Util {
 		return t;
 	}
 
+	public static <T extends Sendable> T send(T t, SenderNT sender) {
+		sender.putData(t);
+		return t;
+	}
+	public static <T extends Sendable> T send(T t, SenderNT sender, String key) {
+		sender.putData(key, t);
+		return t;
+	}
+
 	public static double zeroRange(double v, double epsilon) {
 		return (v < epsilon && v > -epsilon) ? 0.0 : v;
 	}
