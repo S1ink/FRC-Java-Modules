@@ -1,6 +1,7 @@
 package frc.robot.team3407.controls;
 
 import java.util.ArrayList;
+// import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -191,67 +192,13 @@ public class ControlSchemeManager implements Sendable {
 		this.schemes.clear();
 	}
 
-	public boolean runInitial() {
+	public boolean runInitialThread() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
-				System.out.println("ControlSchemeManager: Beginning input search.");
-				InputDevice[] devices = null, buff = null;
+				System.out.println("ControlSchemeManager: Beginning input search...");
+				SelectionBuffer buff = new SelectionBuffer();
 				for(;;) {
-					int id = this.options.getSelected();
-					if(id < 0) {
-						devices = buff = null;
-						int compat = -1;
-						for(int i = 0; i < this.schemes.size(); i++) {
-							buff = this.schemes.get(i).compatible(this.inputs);
-							if(buff != null && buff.length > 0) {
-								switch(this.amb_preference) {
-									case PREFER_COMPLEX: {
-										if(devices == null || buff.length > devices.length) {
-											devices = buff;
-											compat = i;
-										}
-										break;
-									}
-									case PREFER_SIMPLE: {
-										if(devices == null || buff.length < devices.length) {
-											devices = buff;
-											compat = i;
-										}
-										break;
-									}
-									default:
-									case NONE: {
-										compat = (compat == -1) ? i : -2;
-										devices = buff;
-									}
-								}
-							}
-						}
-						if(compat >= 0) {
-							this.schemes.get(compat).setup(devices);
-							this.applied = this.schemes.get(compat).getDesc();
-							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
-							for(InputDevice d : devices) {
-								InputDevice.logDevice(d);
-							}
-							System.out.println();
-							return;
-						} else if(compat < -1) {
-							System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
-						}
-					} else {
-						devices = this.schemes.get(id).compatible(this.inputs);
-						if(devices != null && devices.length > 0) {
-							this.schemes.get(id).setup(devices);
-							this.applied = this.schemes.get(id).getDesc();
-							System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
-							for(InputDevice d : devices) {
-								InputDevice.logDevice(d);
-							}
-							System.out.println();
-							return;
-						}
-					}
+					scheduleInitialWorker(buff);
 					try{ Thread.sleep(500); }
 					catch(InterruptedException e) { System.out.println(e.getMessage()); }
 				}
@@ -261,82 +208,13 @@ public class ControlSchemeManager implements Sendable {
 		}
 		return false;
 	}
-	public boolean runContinuous() {
+	public boolean runContinuousThread() {
 		if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search...");
-				InputDevice[] devices = null, buff = null;
-				int prev_selected = -1;
-				int prev_active_id = -1;
-				boolean has_any = false;
+				ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
 				for(;;) {
-					int id = this.options.getSelected();
-					if(!has_any || (prev_selected != id && prev_active_id != id)) {
-						if(id < 0) {
-							devices = buff = null;
-							int compat = -1;
-							for(int i = 0; i < this.schemes.size(); i++) {
-								buff = this.schemes.get(i).compatible(this.inputs);
-								if(buff != null && buff.length > 0) {
-									switch(this.amb_preference) {
-										case PREFER_COMPLEX: {
-											if(devices == null || buff.length > devices.length) {
-												devices = buff;
-												compat = i;
-											}
-											break;
-										}
-										case PREFER_SIMPLE: {
-											if(devices == null || buff.length < devices.length) {
-												devices = buff;
-												compat = i;
-											}
-											break;
-										}
-										default:
-										case NONE: {
-											compat = (compat == -1) ? i : -2;
-											devices = buff;
-										}
-									}
-								}
-							}
-							if(compat >= 0) {
-								if(has_any) {
-									this.schemes.get(prev_active_id).shutdown();
-								}
-								this.schemes.get(compat).setup(devices);
-								this.applied = this.schemes.get(compat).getDesc();
-								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
-								for(InputDevice d : devices) {
-									InputDevice.logDevice(d);
-								}
-								System.out.println();
-								prev_active_id = compat;
-								prev_selected = id;
-								has_any = true;
-							} else if(compat < -1 && !has_any) {
-								System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
-							}
-						} else {
-							devices = this.schemes.get(id).compatible(this.inputs);
-							if(devices != null && devices.length > 0) {
-								if(has_any) {
-									this.schemes.get(prev_active_id).shutdown();
-								}
-								this.schemes.get(id).setup(devices);
-								this.applied = this.schemes.get(id).getDesc();
-								System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
-								for(InputDevice d : devices) {
-									InputDevice.logDevice(d);
-								}
-								System.out.println();
-								prev_active_id = id;
-								prev_selected = id;
-								has_any = true;
-							}
-						}
-					}
+					scheduleContinuousWorker(buff);
 					try{ Thread.sleep(500); }
 					catch(InterruptedException e) { System.out.println(e.getMessage()); }
 				}
@@ -345,6 +223,160 @@ public class ControlSchemeManager implements Sendable {
 			return true;
 		}
 		return false;
+	}
+
+	// public BooleanSupplier genLoopableRunInitial() {
+	// 	System.out.println("ControlSchemeManager: Beginning input search...");
+	// 	final SelectionBuffer buff = new SelectionBuffer();
+	// 	return ()->{ return this.scheduleInitialWorker(buff); };
+	// }
+	public Runnable genLoopableRunContinuous() {
+		System.out.println("ControlSchemeManager: Beginning input search...");
+		final ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
+		return ()->this.scheduleContinuousWorker(buff);
+	}
+
+
+
+
+
+	private class SelectionBuffer {
+		public InputDevice[] devices = null, buff = null;
+	}
+	private class ContinuousSelectionBuffer extends SelectionBuffer {
+		int prev_selected = -1, prev_active_id = -1;
+		boolean has_any = false;
+	}
+
+	private boolean scheduleInitialWorker() { return this.scheduleInitialWorker(null); }
+	private boolean scheduleInitialWorker(SelectionBuffer sel) {
+		if(sel == null) { sel = new SelectionBuffer(); }
+		int id = this.options.getSelected();
+		if(id < 0) {
+			sel.devices = sel.buff = null;
+			int compat = -1;
+			for(int i = 0; i < this.schemes.size(); i++) {
+				sel.buff = this.schemes.get(i).compatible(this.inputs);
+				if(sel.buff != null && sel.buff.length > 0) {
+					switch(this.amb_preference) {
+						case PREFER_COMPLEX: {
+							if(sel.devices == null || sel.buff.length > sel.devices.length) {
+								sel.devices = sel.buff;
+								compat = i;
+							}
+							break;
+						}
+						case PREFER_SIMPLE: {
+							if(sel.devices == null || sel.buff.length < sel.devices.length) {
+								sel.devices = sel.buff;
+								compat = i;
+							}
+							break;
+						}
+						default:
+						case NONE: {
+							compat = (compat == -1) ? i : -2;
+							sel.devices = sel.buff;
+						}
+					}
+				}
+			}
+			if(compat >= 0) {
+				this.schemes.get(compat).setup(sel.devices);
+				this.applied = this.schemes.get(compat).getDesc();
+				System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
+				for(InputDevice d : sel.devices) {
+					InputDevice.logDevice(d);
+				}
+				System.out.println();
+				return true;
+			} else if(compat < -1) {
+				System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
+			}
+		} else {
+			sel.devices = this.schemes.get(id).compatible(this.inputs);
+			if(sel.devices != null && sel.devices.length > 0) {
+				this.schemes.get(id).setup(sel.devices);
+				this.applied = this.schemes.get(id).getDesc();
+				System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
+				for(InputDevice d : sel.devices) {
+					InputDevice.logDevice(d);
+				}
+				System.out.println();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void scheduleContinuousWorker(ContinuousSelectionBuffer sel) {
+		int id = this.options.getSelected();
+		if(!sel.has_any || (sel.prev_selected != id && sel.prev_active_id != id)) {
+			if(id < 0) {
+				sel.devices = sel.buff = null;
+				int compat = -1;
+				for(int i = 0; i < this.schemes.size(); i++) {
+					sel.buff = this.schemes.get(i).compatible(this.inputs);
+					if(sel.buff != null && sel.buff.length > 0) {
+						switch(this.amb_preference) {
+							case PREFER_COMPLEX: {
+								if(sel.devices == null || sel.buff.length > sel.devices.length) {
+									sel.devices = sel.buff;
+									compat = i;
+								}
+								break;
+							}
+							case PREFER_SIMPLE: {
+								if(sel.devices == null || sel.buff.length < sel.devices.length) {
+									sel.devices = sel.buff;
+									compat = i;
+								}
+								break;
+							}
+							default:
+							case NONE: {
+								compat = (compat == -1) ? i : -2;
+								sel.devices = sel.buff;
+							}
+						}
+					}
+				}
+				if(compat >= 0) {
+					if(sel.has_any) {
+						this.schemes.get(sel.prev_active_id).shutdown();
+					}
+					this.schemes.get(compat).setup(sel.devices);
+					this.applied = this.schemes.get(compat).getDesc();
+					System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(compat).getDesc() + "] with inputs:");
+					for(InputDevice d : sel.devices) {
+						InputDevice.logDevice(d);
+					}
+					System.out.println();
+					sel.prev_active_id = compat;
+					sel.prev_selected = id;
+					sel.has_any = true;
+				} else if(compat < -1 && !sel.has_any) {
+					System.out.println("ControlSchemeManager: Ambiguous case detected, please refine selection.");
+				}
+			} else {
+				sel.devices = this.schemes.get(id).compatible(this.inputs);
+				if(sel.devices != null && sel.devices.length > 0) {
+					if(sel.has_any) {
+						this.schemes.get(sel.prev_active_id).shutdown();
+					}
+					this.schemes.get(id).setup(sel.devices);
+					this.applied = this.schemes.get(id).getDesc();
+					System.out.println("ControlSchemeManager: Set up control scheme [" + this.schemes.get(id).getDesc() + "] with inputs:");
+					for(InputDevice d : sel.devices) {
+						InputDevice.logDevice(d);
+					}
+					System.out.println();
+					sel.prev_active_id = id;
+					sel.prev_selected = id;
+					sel.has_any = true;
+				}
+			}
+		}
 	}
 
 }

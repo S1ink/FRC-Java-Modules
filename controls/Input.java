@@ -10,7 +10,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 
 
 /**
- * This class houses an advanced input framework that extends the general purpose WPILib input system. 
+ * This class houses an advanced input framework that extends the general purpose WPILib input system.
  */
 public class Input {
 
