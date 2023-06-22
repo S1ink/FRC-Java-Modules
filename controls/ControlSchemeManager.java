@@ -135,12 +135,14 @@ public class ControlSchemeManager implements Sendable {
 		PREFER_SIMPLE
 	}
 
+	private static final Thread DUMMY_THREAD = new Thread();
+
 	private final ArrayList<ControlSchemeBase> schemes = new ArrayList<>();
 	private final InputDevice[] inputs = new InputDevice[DriverStation.kJoystickPorts];	// make static?
 	private SendableChooser<Integer> options = new SendableChooser<>();
 	private Thread searcher;
 	private String applied = "None";
-	private AmbiguousSolution amb_preference = AmbiguousSolution.NONE;
+	private AmbiguousSolution ambg_preference = AmbiguousSolution.NONE;
 
 	public ControlSchemeManager() {
 		this.options.setDefaultOption("Automatic", Integer.valueOf(-1));
@@ -169,6 +171,9 @@ public class ControlSchemeManager implements Sendable {
 	public void addScheme(String d, ControlSchemeBase.Setup_F s, InputMap... reqs) {
 		this.addScheme(d, new AutomatedTester(reqs), s);
 	}
+	public void addScheme(String d, ControlSchemeBase.Setup_F s, Runnable e, InputMap... reqs) {
+		this.addScheme(d, new AutomatedTester(reqs), s, e);
+	}
 	public void setDefault(ControlSchemeBase c) {
 		this.options.setDefaultOption(c.getDesc(), Integer.valueOf(this.schemes.size()));
 		this.schemes.add(c);
@@ -184,6 +189,9 @@ public class ControlSchemeManager implements Sendable {
 	public void setDefault(String d, ControlSchemeBase.Setup_F s, InputMap... reqs) {
 		this.setDefault(d, new AutomatedTester(reqs), s);
 	}
+	public void setDefault(String d, ControlSchemeBase.Setup_F s, Runnable e, InputMap... reqs) {
+		this.setDefault(d, new AutomatedTester(reqs), s, e);
+	}
 
 	public void publishSelector() { this.publishSelector("Control Scheme"); }
 	public void publishSelector(String n) {
@@ -197,7 +205,7 @@ public class ControlSchemeManager implements Sendable {
 	}
 
 	public void setAmbiguousSolution(AmbiguousSolution s) {
-		this.amb_preference = s;
+		this.ambg_preference = s;
 	}
 
 	synchronized public void clearSelection() {
@@ -207,8 +215,10 @@ public class ControlSchemeManager implements Sendable {
 	}
 
 
-	public boolean runInitialThread() {
-		if(this.searcher == null || !this.searcher.isAlive()) {
+	public synchronized boolean runInitialThread() {
+		if(this.searcher == DUMMY_THREAD) {
+			System.out.println("ControlSchemeManager: Search not begun due to possible extraneous runners.");
+		} else if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search...");
 				SelectionBuffer buff = new SelectionBuffer();
@@ -223,8 +233,10 @@ public class ControlSchemeManager implements Sendable {
 		}
 		return false;
 	}
-	public boolean runContinuousThread() {
-		if(this.searcher == null || !this.searcher.isAlive()) {
+	public synchronized boolean runContinuousThread() {
+		if(this.searcher == DUMMY_THREAD) {
+			System.out.println("ControlSchemeManager: Search not begun due to possible extraneous runners.");
+		} else if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search...");
 				ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
@@ -240,15 +252,27 @@ public class ControlSchemeManager implements Sendable {
 		return false;
 	}
 
-	// public BooleanSupplier genLoopableRunInitial() {
+	// public BooleanSupplier genLoopableRunInitial() {			// this doesnt really work unless there is some signal to when the loop should end...
 	// 	System.out.println("ControlSchemeManager: Beginning input search...");
 	// 	final SelectionBuffer buff = new SelectionBuffer();
 	// 	return ()->{ return this.scheduleInitialWorker(buff); };
 	// }
-	public Runnable genLoopableRunContinuous() {
+	public synchronized Runnable genLoopableRunContinuous() {
+		if(this.searcher == DUMMY_THREAD || (this.searcher != null && this.searcher.isAlive())) {
+			System.out.println("ControlSchemeManager: Search not begun due to possible extraneous runners.");
+			return ()->{};
+		}
+		this.searcher = DUMMY_THREAD;
 		System.out.println("ControlSchemeManager: Beginning input search...");
 		final ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
 		return ()->this.scheduleContinuousWorker(buff);
+	}
+	public synchronized boolean signalLoopRunnerExit() {
+		if(this.searcher == DUMMY_THREAD) {
+			this.searcher = null;
+			return true;
+		}
+		return false;
 	}
 
 
@@ -273,7 +297,7 @@ public class ControlSchemeManager implements Sendable {
 			for(int i = 0; i < this.schemes.size(); i++) {
 				sel.buff = this.schemes.get(i).compatible(this.inputs);
 				if(sel.buff != null && sel.buff.length > 0) {
-					switch(this.amb_preference) {
+					switch(this.ambg_preference) {
 						case PREFER_COMPLEX: {
 							if(sel.devices == null || sel.buff.length > sel.devices.length) {
 								sel.devices = sel.buff;
@@ -333,7 +357,7 @@ public class ControlSchemeManager implements Sendable {
 				for(int i = 0; i < this.schemes.size(); i++) {
 					sel.buff = this.schemes.get(i).compatible(this.inputs);
 					if(sel.buff != null && sel.buff.length > 0) {
-						switch(this.amb_preference) {
+						switch(this.ambg_preference) {
 							case PREFER_COMPLEX: {
 								if(sel.devices == null || sel.buff.length > sel.devices.length) {
 									sel.devices = sel.buff;

@@ -17,10 +17,12 @@ public class Util {
 		return t;
 	}
 
+	/** Overload for {@link SenderNT} instances in place of the SmartDashboard singleton */
 	public static <T extends Sendable> T send(T t, SenderNT sender) {
 		sender.putData(t);
 		return t;
 	}
+	/** Overload for {@link SenderNT} instances in place of the SmartDashboard singleton */
 	public static <T extends Sendable> T send(T t, SenderNT sender, String key) {
 		sender.putData(key, t);
 		return t;
