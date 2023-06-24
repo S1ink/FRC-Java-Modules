@@ -1,5 +1,7 @@
 package frc.robot.team3407;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -36,6 +38,23 @@ public class Util {
 	}
 	public static double clampEq(double v, double range) {
 		return clamp(v, -Math.abs(range), Math.abs(range));
+	}
+
+
+	public static double[] toComponents3d(Pose3d... poses) {
+		final double[] values = new double[poses.length * 7];
+		for(int i = 0; i < poses.length; i++) {
+			int offset = i * 7;
+			Quaternion q = poses[i].getRotation().getQuaternion();
+			values[offset + 0] = poses[i].getX();
+			values[offset + 1] = poses[i].getY();
+			values[offset + 2] = poses[i].getZ();
+			values[offset + 3] = q.getW();
+			values[offset + 4] = q.getX();
+			values[offset + 5] = q.getY();
+			values[offset + 6] = q.getZ();
+		}
+		return values;
 	}
 
 }
