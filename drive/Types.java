@@ -450,4 +450,67 @@ public final class Types {
 	}
 
 
+
+
+
+	public static class SwerveModulePortMap {
+
+		public final int p_A, p_B;
+	
+		public SwerveModulePortMap(int a, int b)
+		{
+			this.p_A = a;
+			this.p_B = b;
+		}
+
+	}
+	public static class SwerveModuleMap_DiffT <MA extends MotorController, MB extends MotorController> extends SwerveModulePortMap {
+
+		public final MA A;
+		public final MB B;
+
+		public SwerveModuleMap_DiffT (int a, int b, MotorSupplier<MA> t_a, MotorSupplier<MB> t_b) {
+			super(a, b);
+			A = t_a.create(a);
+			B = t_b.create(b);
+		}
+
+	}
+	public static final class SwerveModuleMap <M extends MotorController> extends SwerveModuleMap_DiffT<M, M> {
+
+		public SwerveModuleMap(int a, int b, MotorSupplier<M> t)
+		{
+			super(a, b, t, t);
+		}
+
+	}
+	
+	public static class SwervePortMap {
+
+		public final SwerveModulePortMap[] p_modules;
+
+		public SwervePortMap(SwerveModulePortMap... module_pmaps) {
+			this.p_modules = module_pmaps;
+		}
+
+	}
+	public static class SwerveMap_DiffT <MA extends MotorController, MB extends MotorController> {
+
+		public final SwerveModuleMap_DiffT<MA, MB>[] module_maps;
+
+		public SwerveMap_DiffT(SwerveModuleMap_DiffT<MA, MB>... mmaps) {
+			this.module_maps = mmaps;
+		}
+
+	}
+	public static class SwerveMap <M extends MotorController> {
+		
+		public final SwerveModuleMap<M>[] module_map;
+		
+		public SwerveMap(SwerveModuleMap<M>... mmaps) {
+			this.module_map = mmaps;
+		}
+	}
+
+
 }
