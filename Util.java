@@ -1,5 +1,6 @@
 package frc.robot.team3407;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.util.sendable.Sendable;
@@ -41,6 +42,16 @@ public class Util {
 	}
 
 
+	public static double[] toComponents2d(Pose2d... poses) {
+		final double[] values = new double[poses.length * 3];
+		for(int i = 0; i < poses.length; i++) {
+			int offset = i * 3;
+			values[offset + 0] = poses[i].getX();
+			values[offset + 1] = poses[i].getY();
+			values[offset + 2] = poses[i].getRotation().getRadians();
+		}
+		return values;
+	}
 	public static double[] toComponents3d(Pose3d... poses) {
 		final double[] values = new double[poses.length * 7];
 		for(int i = 0; i < poses.length; i++) {
