@@ -2,6 +2,8 @@ package frc.robot.team3407.drive;
 
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.*;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 
 public class Motors {
@@ -21,6 +23,9 @@ public class Motors {
 	public static final MotorSupplier<WPI_TalonFX> can_talonfx = (int id)->new WPI_TalonFX(id);
 	public static final MotorSupplier<WPI_TalonSRX> can_talonsrx = (int id)->new WPI_TalonSRX(id);
 	public static final MotorSupplier<WPI_VictorSPX> can_victorspx = (int id)->new WPI_VictorSPX(id);
+
+	public static final MotorSupplier<CANSparkMax> can_sparkmax_brushed = (int id)->new CANSparkMax(id, MotorType.kBrushed);
+	public static final MotorSupplier<CANSparkMax> can_sparkmax_brushless = (int id)->new CANSparkMax(id, MotorType.kBrushless);
 
 
 }
