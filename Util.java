@@ -40,6 +40,9 @@ public class Util {
 	public static double clampEq(double v, double range) {
 		return clamp(v, -Math.abs(range), Math.abs(range));
 	}
+	public static double sgnnz(double v) {	// 'sgn', No Zero
+		return v >= 0.0 ? 1.0 : -1.0;
+	}
 
 
 	public static double[] toComponents2d(Pose2d... poses) {
