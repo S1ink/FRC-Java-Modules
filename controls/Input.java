@@ -266,6 +266,28 @@ public class Input {
 
 	}
 
+
+
+	public static AnalogSupplier XMinusY(AnalogMap x, AnalogMap y, InputDevice i) {
+		return XMinusY(x, y, i, i);
+	}
+	public static AnalogSupplier XMinusY(AnalogMap x, AnalogMap y, InputDevice xi, InputDevice yi) {
+		return ()->x.getValueOf(xi) - y.getValueOf(yi);
+	}
+	public static AnalogSupplier XMinusYScaled(AnalogMap x, AnalogMap y, InputDevice i, double scale) {
+		return XMinusYScaled(x, y, i, i, scale);
+	}
+	public static AnalogSupplier XMinusYScaled(AnalogMap x, AnalogMap y, InputDevice xi, InputDevice yi, double scale) {
+		return ()->((x.getValueOf(xi) - y.getValueOf(yi)) * scale);
+	}
+	public static BooleanSupplier ANotB(DigitalMap a, DigitalMap b, InputDevice i) {
+		return ANotB(a, b, i, i);
+	}
+	public static BooleanSupplier ANotB(DigitalMap a, DigitalMap b, InputDevice ai, InputDevice bi) {
+		return ()->a.getValueOf(ai) && !b.getValueOf(bi);
+	}
+
+
 	/**
 	 * AnalogMap defines all functions available to Analog enums (defined below)
 	 */
