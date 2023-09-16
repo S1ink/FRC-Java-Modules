@@ -17,6 +17,17 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  */
 public final class SenderNT {
 
+	/**
+	 * Represents a {@link Sendable} that may have sub-sendable members that should be setup with keys under the basename key.
+	 */
+	public static interface RecursiveSendable extends Sendable {
+
+		/** Recursively initiate the sendables. */
+		public void initRecursive(SenderNT inst, String base);
+
+	}
+
+
 	private NetworkTable table;
 	private final Map<String, Sendable> data_tables = new HashMap<>();
 
@@ -30,8 +41,12 @@ public final class SenderNT {
 
 
 
+	public synchronized void putData(String key, RecursiveSendable data) {
+		data.initRecursive(this, key);
+	}
 	/* Copied straight from the SmartDashboard class. */
 	public synchronized void putData(String key, Sendable data) {
+		// try { this.putData( (RecursiveSendable)data ); } catch(ClassCastException e) {}	// this might create an infinite loop
 		Sendable current = this.data_tables.get(key);
 		if(current == null || current != data) {
 			this.data_tables.put(key, data);
