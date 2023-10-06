@@ -6,6 +6,8 @@ import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import frc.robot.team3407.SenderNT.RecursiveSendable;
+
 
 public class Util {
 
@@ -27,6 +29,11 @@ public class Util {
 	}
 	/** Overload for {@link SenderNT} instances in place of the SmartDashboard singleton */
 	public static <T extends Sendable> T send(T t, SenderNT sender, String key) {
+		sender.putData(key, t);
+		return t;
+	}
+	/** Overload for {@link SenderNT} instances with the use of {@link RecursiveSendable} sendables */
+	public static <T extends RecursiveSendable> T send(T t, SenderNT sender, String key) {
 		sender.putData(key, t);
 		return t;
 	}
