@@ -266,28 +266,6 @@ public class Input {
 
 	}
 
-
-
-	public static AnalogSupplier XMinusY(AnalogMap x, AnalogMap y, InputDevice i) {
-		return XMinusY(x, y, i, i);
-	}
-	public static AnalogSupplier XMinusY(AnalogMap x, AnalogMap y, InputDevice xi, InputDevice yi) {
-		return ()->x.getValueOf(xi) - y.getValueOf(yi);
-	}
-	public static AnalogSupplier XMinusYScaled(AnalogMap x, AnalogMap y, InputDevice i, double scale) {
-		return XMinusYScaled(x, y, i, i, scale);
-	}
-	public static AnalogSupplier XMinusYScaled(AnalogMap x, AnalogMap y, InputDevice xi, InputDevice yi, double scale) {
-		return ()->((x.getValueOf(xi) - y.getValueOf(yi)) * scale);
-	}
-	public static BooleanSupplier ANotB(DigitalMap a, DigitalMap b, InputDevice i) {
-		return ANotB(a, b, i, i);
-	}
-	public static BooleanSupplier ANotB(DigitalMap a, DigitalMap b, InputDevice ai, InputDevice bi) {
-		return ()->a.getValueOf(ai) && !b.getValueOf(bi);
-	}
-
-
 	/**
 	 * AnalogMap defines all functions available to Analog enums (defined below)
 	 */
@@ -480,6 +458,12 @@ public class Input {
 			}
 			return false;
 		}
+		/**
+		 * Get a supplier for the raw state of the digital input.
+		 * 
+		 * @param i the input device
+		 * @return a supplier for the raw state
+		 */
 		default DigitalSupplier getSupplier(GenericHID i) {
 			if(this.isPovBindOf(i)) {
 				return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
@@ -488,6 +472,12 @@ public class Input {
 			}
 			return ()->false;
 		}
+		/**
+		 * Get a supplier for the raw state of the digital input.
+		 * 
+		 * @param p the input device
+		 * @return a supplier for the raw state
+		 */
 		default DigitalSupplier getSupplier(int p) {
 			if(this.isPovBindOf(p)) {
 				return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
@@ -496,6 +486,13 @@ public class Input {
 			}
 			return ()->false;
 		}
+		/**
+		 * Get a supplier for if the input was activated during the last internal loop. WARNING: the state may not persist for multiple
+		 * calls during the same periodic loop!
+		 * 
+		 * @param i the input device
+		 * @return a supplier for the raw state
+		 */
 		default DigitalSupplier getPressedSupplier(GenericHID i) {
 			if(this.isPovBindOf(i)) {
 				return ()->(i.getPOV((this.getValue() - i.getButtonCount()-1) / 4) / 90.0 + 1) == this.getValue() - i.getButtonCount();
@@ -504,6 +501,13 @@ public class Input {
 			}
 			return ()->false;
 		}
+		/**
+		 * Get a supplier for if the input was activated during the last internal loop. WARNING: the state may not persist for multiple
+		 * calls during the same periodic loop!
+		 * 
+		 * @param p the input device
+		 * @return a supplier for the raw state
+		 */
 		default DigitalSupplier getPressedSupplier(int p) {
 			if(this.isPovBindOf(p)) {
 				return ()->(DriverStation.getStickPOV(p, (this.getValue() - DriverStation.getStickButtonCount(p)-1) / 4) / 90.0 + 1) == this.getValue() - DriverStation.getStickButtonCount(p);
