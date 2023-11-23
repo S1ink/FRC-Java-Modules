@@ -221,7 +221,7 @@ public class ControlSchemeManager implements Sendable {
 		} else if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search...");
-				SelectionBuffer buff = new SelectionBuffer();
+				final SelectionBuffer buff = new SelectionBuffer();
 				for(;;) {
 					scheduleInitialWorker(buff);
 					try{ Thread.sleep(500); }
@@ -239,7 +239,7 @@ public class ControlSchemeManager implements Sendable {
 		} else if(this.searcher == null || !this.searcher.isAlive()) {
 			this.searcher = new Thread(()->{
 				System.out.println("ControlSchemeManager: Beginning input search...");
-				ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
+				final ContinuousSelectionBuffer buff = new ContinuousSelectionBuffer();
 				for(;;) {
 					scheduleContinuousWorker(buff);
 					try{ Thread.sleep(500); }
