@@ -38,20 +38,29 @@ public class Util {
 		return t;
 	}
 
-	public static double zeroRange(double v, double epsilon) {
-		return (v < epsilon && v > -epsilon) ? 0.0 : v;
+	/** Test if a value is within a certain epsilon away from zero. */
+	public static boolean isZero(double v, double epsilon) {
+		return (v < epsilon && v > -epsilon);
 	}
+	/** Return 0.0 if a value is within a certain epsilon away from zero, else return the value. */
+	public static double zeroRange(double v, double epsilon) {
+		return isZero(v, epsilon) ? 0.0 : v;
+	}
+	/** Clamp a value between two bounds. */
 	public static double clamp(double v, double min, double max) {
 		return Math.min(max, Math.max(min, v));
 	}
+	/** Clamp a value between the positive and negatives of a range. */
 	public static double clampEq(double v, double range) {
 		return clamp(v, -Math.abs(range), Math.abs(range));
 	}
+	/** Return the sign of a number, returning 1.0 if the number is equal to 0. */
 	public static double sgnnz(double v) {	// 'sgn', No Zero
 		return v >= 0.0 ? 1.0 : -1.0;
 	}
 
 
+	/** Convert a set of 2d poses to an array of telemetry values. */
 	public static double[] toComponents2d(Pose2d... poses) {
 		final double[] values = new double[poses.length * 3];
 		for(int i = 0; i < poses.length; i++) {
@@ -62,6 +71,7 @@ public class Util {
 		}
 		return values;
 	}
+	/** Convert a set of 3d poses to an array of telemetry values. */
 	public static double[] toComponents3d(Pose3d... poses) {
 		final double[] values = new double[poses.length * 7];
 		for(int i = 0; i < poses.length; i++) {
